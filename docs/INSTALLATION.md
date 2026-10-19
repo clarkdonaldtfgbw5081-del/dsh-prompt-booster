@@ -15,7 +15,7 @@
 2. 使用管理该 DSH 安装的 CLI 安装：
 
    ```powershell
-   dsh plugin --profile web add ./dsh-prompt-booster-0.2.2.tgz
+   dsh plugin --profile web add ./dsh-prompt-booster-0.2.3.tgz
    ```
 
    桌面版请使用应用安装目录中附带的 CLI，不要混用其他全局安装的 `dsh`。
@@ -33,10 +33,10 @@ npm run typecheck
 npm test
 npm run build
 npm pack
-dsh plugin --profile web add ./dsh-prompt-booster-0.2.2.tgz
+dsh plugin --profile web add ./dsh-prompt-booster-0.2.3.tgz
 ```
 
-`npm pack` 会依次执行发布前路径检查、类型检查、123 项测试、离线评测、构建和产物冒烟检查；全部通过后才会生成 tarball。
+`npm pack` 会依次执行发布前路径检查、类型检查、124 项测试、离线评测、构建和产物冒烟检查；全部通过后才会生成 tarball。
 
 ## 升级
 

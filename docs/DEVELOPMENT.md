@@ -50,6 +50,7 @@ API key 只存在于启动服务的终端进程中；演示页面本身不存储
 src/index.ts            宿主服务、模型调用、会话审计、反馈
 src/adapters/           wire / route / context / controls 适配层
 src/core/               引擎、任务分类、方案选择、提示词、失败与反馈
+src/core/prompt.ts      短核心提示词、渐进式上下文（modelInput）与 PROMPT_VERSION
 src/guards/             确定性约束检查
 src/client/             React 输入框入口、回填、取消、还原、样式与中英文文案
 src/client/copy.ts      客户端状态 / 按钮 / 错误文案的中英字典
@@ -73,6 +74,7 @@ locale/                 中英文客户端文案
 5. **新增依赖要克制**：优先原生能力；生产依赖变更需要说明体积、维护状态与安全影响。
 6. **DSH 版本固定**：接口变化时更新 `engines.dsh`、peerDependencies、兼容文档与测试，不要在一个版本里同时声称兼容多个 DSH 版本。
 7. **失败要可解释**：新增失败分支要定义安全的 `reason_code`，不把提供方异常正文透传到客户端。
+8. **提示词按需展开**：通用规则才进 `SYSTEM_PROMPT`；页面默认项、软件方案和保护片段只在适用时由 `modelInput()` 发送。修改原则见 [PROMPT-ENGINEERING.md](./PROMPT-ENGINEERING.md)。
 
 ## 测试要求
 

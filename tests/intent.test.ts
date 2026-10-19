@@ -89,7 +89,7 @@ test('prepared model input exposes task-specific guidance without reading projec
   const input = JSON.parse(modelInput(request('修复现有项目的登录报错，不新增依赖')))
   assert.equal(input.task_intent.task_type, 'debug')
   assert.equal(input.task_intent.project, 'existing')
-  assert.deepEqual(input.default_choices, [])
+  assert.equal(input.default_choices, undefined)
   assert.ok(input.task_intent.guidance.some((line: string) => line.includes('不假定根因已经查明')))
   assert.equal(input.max_output_chars, 400)
 })

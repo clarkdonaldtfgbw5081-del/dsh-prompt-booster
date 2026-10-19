@@ -10,7 +10,7 @@ DeepSeek Harness（DSH）提示词优化插件：点一下输入框工具行的 
 [![CI](https://github.com/clarkdonaldtfgbw5081-del/dsh-prompt-booster/actions/workflows/ci.yml/badge.svg)](https://github.com/clarkdonaldtfgbw5081-del/dsh-prompt-booster/actions/workflows/ci.yml)
 [![DSH](https://img.shields.io/badge/DSH-0.2.1--rc.2-4a6b5c.svg)](https://github.com/clarkdonaldtfgbw5081-del/dsh-prompt-booster/blob/main/docs/COMPATIBILITY.md)
 [![Node](https://img.shields.io/badge/node-%3E%3D22.19-3c873a.svg)](https://github.com/clarkdonaldtfgbw5081-del/dsh-prompt-booster/blob/main/package.json)
-![version](https://img.shields.io/badge/version-0.2.2-5b7f6a.svg)
+![version](https://img.shields.io/badge/version-0.2.3-5b7f6a.svg)
 
 <img src="https://raw.githubusercontent.com/clarkdonaldtfgbw5081-del/dsh-prompt-booster/main/docs/assets/icon.png" width="72" align="right" alt="DSH Prompt Booster 图标" />
 
@@ -33,6 +33,7 @@ DeepSeek Harness（DSH）提示词优化插件：点一下输入框工具行的 
 - **直接回填**：成功且通过校验后替换原草稿；请求期间编辑草稿、切换会话、加入结构化引用都会阻止旧结果覆盖。
 - **取消与还原**：优化中再次点击图标可取消；失败时点击重试；成功后点击 ↶ 还原原稿。
 - **任务感知的改写**：区分代码生成、故障排查、写作、研究、分析、网页 / 应用开发、现有项目修改与纯问答；写作和排错不会套用应用开发模板。
+- **按需展开的提示词**：写作任务不注入页面默认项，软件任务才带方案边界；受保护片段和资料也只在存在时进入模型请求。
 - **按需上下文**：只在草稿含有“这个 / 上面 / 根据”等指代时读取当前会话最近至多 3 条用户消息；文件只读取设置中明确列出的工作区文本，跳过常见凭据、二进制、目录与越界路径。
 - **原生设置**：超时、输出预算、模型路由、上下文、详细度 / 语气 / 默认方案、修复策略都可以在 DSH 设置页或 profile patch 中管理。
 - **可审计但不遥测**：辅助请求以 ignorable plugin record 写入当前 DSH 会话日志；事件摘要只保存在有界内存中，不单独落盘、不发送遥测。
@@ -65,11 +66,11 @@ DeepSeek Harness（DSH）提示词优化插件：点一下输入框工具行的 
 
 要求 DSH `0.2.1-rc.2`，并已配置可用模型。
 
-1. 从本仓库 Releases 下载 `dsh-prompt-booster-0.2.2.tgz`。
+1. 从本仓库 Releases 下载 `dsh-prompt-booster-0.2.3.tgz`。
 2. 用管理该 DSH 安装的 CLI 安装：
 
    ```powershell
-   dsh plugin --profile web add ./dsh-prompt-booster-0.2.2.tgz
+   dsh plugin --profile web add ./dsh-prompt-booster-0.2.3.tgz
    ```
 
    桌面版请使用应用安装目录自带的 CLI，不要混用其他全局安装的 `dsh`。
@@ -96,7 +97,7 @@ npm run dev
 ```powershell
 npm run verify
 npm pack
-dsh plugin --profile web add ./dsh-prompt-booster-0.2.2.tgz
+dsh plugin --profile web add ./dsh-prompt-booster-0.2.3.tgz
 ```
 
 ## 使用
@@ -169,7 +170,7 @@ DSH 版本按精确版本固定。其他版本可能可以加载，但本仓库�
 ```powershell
 npm ci
 npm run typecheck   # 宿主、客户端、检查配置四套 TS 检查
-npm test            # 123 项自动化测试
+npm test            # 124 项自动化测试
 npm run evals       # 80 条人工构造离线样例
 npm run build       # 宿主、客户端 bundle、声明文件与本地 demo
 npm run smoke       # 对构建产物执行原生 Cordis / 客户端注入冒烟
@@ -192,6 +193,8 @@ cordis.patch.yml        DSH bundle 安装层
 ```
 
 `npm run evals:live` 会调用真实模型，需要配置 `BOOST_API_KEY`；详见 [evals/README.md](https://github.com/clarkdonaldtfgbw5081-del/dsh-prompt-booster/blob/main/evals/README.md)。自动化测试与离线样例只能证明已覆盖的行为，不能证明任意自然语言输入的语义等价或下游任务质量。
+
+提示词分层、上下文裁剪、默认项注入和真实模型评测流程见 [docs/PROMPT-ENGINEERING.md](https://github.com/clarkdonaldtfgbw5081-del/dsh-prompt-booster/blob/main/docs/PROMPT-ENGINEERING.md)。
 
 ## 限制
 

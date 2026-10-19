@@ -64,17 +64,17 @@ gh repo create clarkdonaldtfgbw5081-del/dsh-prompt-booster --public --source=. -
 ```powershell
 npm run verify
 npm pack
-# 生成 dsh-prompt-booster-0.2.2.tgz
-git tag v0.2.2
-git push origin v0.2.2
+# 生成 dsh-prompt-booster-0.2.3.tgz
+git tag v0.2.3
+git push origin v0.2.3
 ```
 
 在 GitHub Releases 中：
 
-- 选择 tag `v0.2.2`。
-- 附上 `dsh-prompt-booster-0.2.2.tgz`。
+- 选择 tag `v0.2.3`。
+- 附上 `dsh-prompt-booster-0.2.3.tgz`。
 - 发布说明从 `CHANGELOG.md` 的对应版本复制，明确 DSH 基线 `0.2.1-rc.2`、测试结果和限制。
-- 如果更新了版本，请先运行 `npm run release:version 0.2.3`，再执行 `npm run verify` 和 `npm pack`。
+- 如果更新了版本，请先运行 `npm run release:version 0.2.4`，再执行 `npm run verify` 和 `npm pack`。
 
 ## 5. GitHub 仓库设置
 
