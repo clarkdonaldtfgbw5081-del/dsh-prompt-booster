@@ -1,0 +1,23 @@
+# dependencies and local runtime
+node_modules/
+.reference/
+lib/
+demo/dist/
+.local/
+artifacts/
+install-backup-*/
+*.tgz
+*.log
+
+# secrets and local config
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+.DS_Store
+Thumbs.db
+
+# test / coverage output
+coverage/
+.nyc_output/

@@ -1,0 +1,4 @@
+{
+  "extends": "./tsconfig.client.json",
+  "files": ["src/client/index.tsx", "tests/client-injection.test.ts"]
+}

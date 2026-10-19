@@ -1,0 +1,77 @@
+---
+name: Bug report
+description: 报告可复现的问题（请不要贴出凭据、真实用户草稿或 API key）
+title: "[bug] "
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        感谢反馈。请先确认没有在公开内容中包含 API key、凭据、工作区敏感文件或真实用户草稿。
+  - type: input
+    id: plugin-version
+    attributes:
+      label: 插件版本
+      description: package.json 版本或 Release tag
+      placeholder: "0.2.2"
+    validations:
+      required: true
+  - type: input
+    id: dsh-version
+    attributes:
+      label: DSH / Cordis 版本
+      placeholder: "DSH 0.2.1-rc.2 / Cordis 4.0.5"
+    validations:
+      required: true
+  - type: input
+    id: environment
+    attributes:
+      label: 环境
+      placeholder: "Windows 11 / DSH 桌面版 / Node 24.16.0"
+    validations:
+      required: true
+  - type: dropdown
+    id: area
+    attributes:
+      label: 问题区域
+      options:
+        - 输入框入口 / 图标
+        - 优化结果 / 回填
+        - 取消 / 还原 / 焦点
+        - 上下文 / 文件读取
+        - 守卫 / 失败回退
+        - 设置 / 配置
+        - 安装 / 加载
+        - 其他
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: 复现步骤
+      placeholder: |
+        1. 打开会话 ...
+        2. 输入草稿 ...
+        3. 点击 ✦ ...
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: 预期行为
+    validations:
+      required: true
+  - type: textarea
+    id: actual
+    attributes:
+      label: 实际行为
+      description: 如有状态码 / reason_code，请附上；不要贴出完整草稿或模型响应原文。
+    validations:
+      required: true
+  - type: textarea
+    id: extra
+    attributes:
+      label: 其他信息
+      description: 可附截图、日志片段（去掉敏感内容）或最近一次成功的行为。
+    validations:
+      required: false

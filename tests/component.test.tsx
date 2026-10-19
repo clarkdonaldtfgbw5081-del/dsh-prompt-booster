@@ -1,0 +1,153 @@
+import { test } from 'node:test'
+import assert from 'node:assert/strict'
+import { create, act, type ReactTestRenderer } from 'react-test-renderer'
+import { Booster, type BoosterProps } from '../src/client/Booster.tsx'
+import { baseResult } from '../src/core/engine.ts'
+import type { BoostEvent, BoostRequest, BoostResult } from '../src/types.ts'
+import type { DraftSnapshot } from '../src/client/draft.ts'
+
+function setup(onEvent?: (event: BoostEvent) => void) {
+  let draft: DraftSnapshot = { text: '写一份周报', revision: 0, locked: false, hasReferences: false }
+  const pending: { request: BoostRequest; signal: AbortSignal; resolve(value: BoostResult): void; reject(error: Error): void }[] = []
+  let renderer!: ReactTestRenderer
+  let session = 'first'
+  let focused = 0, writes = 0
+  const props = (): BoosterProps => ({
+    draft, readDraft: () => draft,
+    replaceDraft(revision, text) { if (revision !== draft.revision) return false; writes++; draft = { ...draft, text, revision: revision + 1 }; return true },
+    focusDraft() { focused++ },
+    generate(request, signal) { return new Promise((resolve, reject) => { pending.push({ request, signal, resolve, reject }) }) },
+    onEvent,
+  })
+  act(() => { renderer = create(<Booster key={session} {...props()} />) })
+  const refresh = () => act(() => renderer.update(<Booster key={session} {...props()} />))
+  const button = (label: string) => renderer.root.findAllByType('button').find(node => node.props['aria-label'] === label)!
+  return {
+    renderer, button, read: () => draft, pending, focused: () => focused, writes: () => writes,
+    edit(text: string) { draft = { ...draft, text, revision: draft.revision + 1 }; refresh() },
+    change(values: Partial<DraftSnapshot>, render = true) { draft = { ...draft, ...values }; if (render) refresh() },
+    switchSession() { session = 'second'; draft = { text: '新会话任务', revision: 0, locked: false, hasReferences: false }; refresh() },
+    async complete(overrides: Partial<BoostResult> = {}, index = pending.length - 1) {
+      const call = pending[index]
+      await act(async () => { call.resolve({ ...baseResult(call.request, 'fixture'), status: 'ok', optimized: '请写一份周报，按重点组织内容。', ...overrides }); await Promise.resolve() })
+      refresh()
+    },
+    async fail() { await act(async () => { pending.at(-1)!.reject(new Error('secret-provider-error')); await Promise.resolve() }); refresh() },
+    start() { act(() => { button('优化提示词').props.onClick() }) },
+    refresh,
+  }
+}
+test('one click directly replaces the draft without any dialog or preview editor', async () => {
+  const view = setup()
+  try {
+    view.start(); assert.equal(view.read().text, '写一份周报')
+    assert.equal(view.renderer.root.findAll(node => node.props.role === 'dialog').length, 0)
+    await view.complete()
+    assert.equal(view.read().text, '请写一份周报，按重点组织内容。')
+    assert.equal(view.focused(), 1); assert.equal(view.writes(), 1)
+    assert.equal(view.renderer.root.findAllByType('textarea').length, 0)
+    assert.equal(view.renderer.root.findAll(node => node.props.role === 'dialog').length, 0)
+    act(() => view.button('还原原稿').props.onClick()); view.refresh()
+    assert.equal(view.read().text, '写一份周报')
+    assert.equal(view.focused(), 2); assert.equal(view.writes(), 2)
+  } finally { act(() => view.renderer.unmount()) }
+})
+test('automatic replacement cannot overwrite edits made during optimization', async () => {
+  const view = setup()
+  try {
+    view.start(); view.edit('用户的新任务'); await view.complete()
+    assert.equal(view.read().text, '用户的新任务')
+    assert.equal(view.button('还原原稿'), undefined)
+  } finally { act(() => view.renderer.unmount()) }
+})
+test('live draft revision protects edits even before a React rerender', async () => {
+  const view = setup()
+  try {
+    view.start(); view.change({ text: '尚未渲染的新任务', revision: 1 }, false); await view.complete()
+    assert.equal(view.read().text, '尚未渲染的新任务')
+  } finally { act(() => view.renderer.unmount()) }
+})
+test('clicking the busy icon cancels and ignores a late response', async () => {
+  const view = setup()
+  try {
+    view.start(); act(() => view.button('取消优化').props.onClick())
+    assert.equal(view.pending[0].signal.aborted, true); await view.complete()
+    assert.equal(view.read().text, '写一份周报')
+    assert.equal(view.button('优化提示词').props.disabled, false)
+  } finally { act(() => view.renderer.unmount()) }
+})
+test('a cancelled request cannot replace the result of a newer request', async () => {
+  const view = setup()
+  try {
+    view.start(); act(() => view.button('取消优化').props.onClick()); view.start()
+    await view.complete({ optimized: '请整理一份周报。' }, 1)
+    await view.complete({}, 0)
+    assert.equal(view.read().text, '请整理一份周报。')
+  } finally { act(() => view.renderer.unmount()) }
+})
+test('automatic replacement validates constraints locally before writing', async () => {
+  const view = setup()
+  try {
+    view.start(); await view.complete({ optimized: '使用 React 写一份周报' })
+    assert.equal(view.read().text, '写一份周报')
+    assert.equal(view.button('还原原稿'), undefined)
+  } finally { act(() => view.renderer.unmount()) }
+})
+test('optional suggestions are not automatically appended or approved', async () => {
+  const view = setup()
+  try {
+    view.start(); await view.complete({ additions: [{ id: 's', kind: 'suggestion', value: '额外准备演示文稿', action: 'pending' }] })
+    assert.equal(view.read().text, '请写一份周报，按重点组织内容。')
+    view.start(); await view.complete({ optimized: '额外准备演示文稿', additions: [{ id: 's', kind: 'suggestion', value: '额外准备演示文稿', action: 'pending' }] })
+    assert.equal(view.read().text, '请写一份周报，按重点组织内容。')
+  } finally { act(() => view.renderer.unmount()) }
+})
+test('automatically applied and undo feedback stay correlated without false sends', async () => {
+  const events: BoostEvent[] = []
+  const view = setup(event => events.push(event))
+  try {
+    view.start(); await view.complete()
+    act(() => view.button('还原原稿').props.onClick()); view.refresh(); view.edit('')
+    assert.deepEqual(events.map(event => [event.name, event.ok]), [['boost_applied', true], ['boost_undone', true]])
+    assert.ok(events.every(event => event.request_id === view.pending[0].request.request_id))
+    assert.ok(!JSON.stringify(events).includes('写一份周报'))
+  } finally { act(() => view.renderer.unmount()) }
+})
+test('fallback and transport failures keep the draft and allow retry from the same icon', async () => {
+  const view = setup()
+  try {
+    view.start(); await view.complete({ status: 'fallback', reason_code: 'timeout' })
+    assert.equal(view.read().text, '写一份周报')
+    view.start(); await view.fail()
+    assert.ok(!JSON.stringify(view.renderer.toJSON()).includes('secret-provider-error'))
+    assert.equal(view.read().text, '写一份周报')
+    view.start(); await view.complete()
+    assert.equal(view.read().text, '请写一份周报，按重点组织内容。')
+  } finally { act(() => view.renderer.unmount()) }
+})
+test('structured references and locked input cannot be replaced after a request starts', async () => {
+  for (const change of [{ hasReferences: true }, { locked: true }]) {
+    const view = setup()
+    try {
+      view.start(); view.change(change); await view.complete()
+      assert.equal(view.read().text, '写一份周报')
+      assert.equal(view.button('优化提示词').props.disabled, true)
+    } finally { act(() => view.renderer.unmount()) }
+  }
+})
+test('mismatched result metadata cannot be automatically written', async () => {
+  const view = setup()
+  try {
+    view.start(); await view.complete({ request_id: 'other-request' })
+    assert.equal(view.read().text, '写一份周报')
+  } finally { act(() => view.renderer.unmount()) }
+})
+test('switching session aborts the old request and leaves the new draft untouched', async () => {
+  const view = setup()
+  try {
+    view.start(); view.switchSession()
+    assert.equal(view.pending[0].signal.aborted, true)
+    await view.complete()
+    assert.equal(view.read().text, '新会话任务')
+  } finally { act(() => view.renderer.unmount()) }
+})

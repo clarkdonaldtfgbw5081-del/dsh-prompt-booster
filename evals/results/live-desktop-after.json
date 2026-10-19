@@ -1,0 +1,45 @@
+{
+  "source": "configured-desktop-account-adapter",
+  "syntheticRequests": true,
+  "cases": [
+    {
+      "id": "visual",
+      "status": "ok",
+      "reason": null,
+      "warnings": [],
+      "latency_ms": 1072,
+      "attempts": 1,
+      "finish": "stop",
+      "effort": "off",
+      "outputChars": 173,
+      "syntheticModelResponse": "{\"optimized\":\"生成一个风景主题的网页，整体要有高级感：请用克制的配色、留白和排版营造氛围。默认技术路线：优先沿用现有项目；独立新页面采用原生 HTML/CSS/JavaScript，不新增依赖。默认页面结构：主题主视觉、内容展示与简短介绍。默认素材：使用契合主题的可替换占位图；有用户素材时优先采用，否则选择授权可用图片。默认交付：页面完整源码及本地运行说明。\",\"task_type\":\"code_gen\",\"additions\":[],\"unresolved\":[]}"
+    },
+    {
+      "id": "local-plan",
+      "status": "fallback",
+      "reason": "guard_failed",
+      "warnings": [
+        "lost_constraint"
+      ],
+      "latency_ms": 2163,
+      "attempts": 2,
+      "finish": "stop",
+      "effort": "off",
+      "outputChars": 28,
+      "syntheticModelResponse": "{\"optimized\":\"针对现有登录页面，先给出排版优化方案，说明当前存在的排版问题、调整思路和具体改动点。本轮只讨论方案，不要改代码，不新增依赖。\",\"task_type\":\"code_gen\",\"additions\":[],\"unresolved\":[\"现有登录页面的具体结构与当前排版问题\",\"期望的视觉风格或参考样式\"],\"slots\":{\"goal\":\"给出登录页面排版优化方案\",\"constraints\":[\"先给方案\",\"不要改代码\",\"不新增依赖\"],\"output_format\":\"排版问题、调整思路、具体改动点\"}}"
+    },
+    {
+      "id": "writing",
+      "status": "ok",
+      "reason": null,
+      "warnings": [],
+      "latency_ms": 694,
+      "attempts": 1,
+      "finish": "stop",
+      "effort": "off",
+      "outputChars": 23,
+      "syntheticModelResponse": "{\"optimized\":\"写一封中文说明邮件，收件人是初学者，语气友好。\",\"task_type\":\"writing\",\"additions\":[],\"unresolved\":[\"邮件需要说明的具体主题和内容\"]}"
+    }
+  ],
+  "setup": "ready"
+}

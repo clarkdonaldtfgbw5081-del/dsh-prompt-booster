@@ -1,0 +1,41 @@
+{
+  "source": "configured-desktop-account-adapter",
+  "syntheticRequests": true,
+  "cases": [
+    {
+      "id": "visual",
+      "status": "fallback",
+      "reason": "guard_failed",
+      "warnings": [
+        "fact_not_in_body"
+      ],
+      "latency_ms": 1890,
+      "finish": "stop",
+      "effort": "off",
+      "outputChars": 14
+    },
+    {
+      "id": "local-plan",
+      "status": "fallback",
+      "reason": "guard_failed",
+      "warnings": [
+        "lost_constraint"
+      ],
+      "latency_ms": 671,
+      "finish": "stop",
+      "effort": "off",
+      "outputChars": 28
+    },
+    {
+      "id": "writing",
+      "status": "ok",
+      "reason": null,
+      "warnings": [],
+      "latency_ms": 764,
+      "finish": "stop",
+      "effort": "off",
+      "outputChars": 47
+    }
+  ],
+  "setup": "ready"
+}

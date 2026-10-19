@@ -1,0 +1,18 @@
+{
+  "source": "configured-desktop-account-adapter",
+  "syntheticRequests": true,
+  "cases": [
+    {
+      "id": "visual",
+      "status": "fallback",
+      "reason": "model_request_failed",
+      "warnings": [],
+      "latency_ms": 47,
+      "finish": "error",
+      "nativeCode": "TRANSPORT",
+      "effort": "off",
+      "outputChars": 14
+    }
+  ],
+  "setup": "ready"
+}

@@ -1,0 +1,35 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: write
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24.x
+          cache: npm
+      - run: npm ci
+      - name: Check tag matches package version
+        run: |
+          node --input-type=module -e "import fs from 'node:fs'; const p = JSON.parse(fs.readFileSync('package.json', 'utf8')); if ('v' + p.version !== process.env.GITHUB_REF_NAME) { console.error('tag ' + process.env.GITHUB_REF_NAME + ' does not match package.json ' + p.version); process.exit(1) }"
+      - run: npm run verify
+      - run: npm pack --ignore-scripts
+      - name: Extract release notes
+        run: node scripts/changelog-notes.mjs "${GITHUB_REF_NAME}" > release-notes.md
+      - name: Create GitHub Release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh release create "${GITHUB_REF_NAME}" \
+            ./dsh-prompt-booster-*.tgz \
+            --title "${GITHUB_REF_NAME}" \
+            --notes-file release-notes.md

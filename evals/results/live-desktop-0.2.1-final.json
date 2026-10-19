@@ -1,0 +1,31 @@
+{
+  "source": "configured-desktop-account-adapter",
+  "syntheticRequests": true,
+  "cases": [
+    {
+      "id": "data-app",
+      "status": "ok",
+      "reason": null,
+      "warnings": [],
+      "latency_ms": 1325,
+      "attempts": 1,
+      "finish": "stop",
+      "effort": "off",
+      "outputChars": 191,
+      "syntheticModelResponse": "{\"optimized\":\"开发一个带数据库和查询接口的网站，不新增依赖。请先说明数据库结构、查询接口的输入输出与失败反馈，再给出页面结构与本次所需的源码，并附本地验证说明；默认优先沿用项目已有约定，只选用本次必需的组件。\",\"task_type\":\"code_gen\",\"additions\":[{\"id\":\"d1\",\"value\":\"默认技术路线：优先沿用项目约定，仅选择本次应用所需的组件，并在本地验证。\",\"kind\":\"default_assumption\",\"category\":\"tech_stack\",\"action\":\"included\"},{\"id\":\"d2\",\"value\":\"默认页面结构：围绕页面核心目标安排主要内容与必要操作，保持层次清晰。\",\"kind\":\"default_assumption\",\"category\":\"page_modules\",\"action\":\"included\"},{\"id\":\"d3\",\"value\":\"默认交付：本次应用所需源码与本地验证说明。\",\"kind\":\"default_assumption\",\"category\":\"delivery\",\"action\":\"included\"}],\"unresolved\":[\"项目现有技术栈与目录约定\",\"数据库类型与查询接口的具体字段\"]}"
+    },
+    {
+      "id": "architect-plan",
+      "status": "ok",
+      "reason": null,
+      "warnings": [],
+      "latency_ms": 1406,
+      "attempts": 1,
+      "finish": "stop",
+      "effort": "off",
+      "outputChars": 164,
+      "syntheticModelResponse": "{\"optimized\":\"使用 Architect 开发一个带查询接口的网站。本轮先给方案：确定查询接口的输入输出与失败反馈、网站页面与接口的模块边界、所需资源清单及本地沙箱验证方法；先给方案，不要改代码。\",\"task_type\":\"code_gen\",\"additions\":[{\"id\":\"d1\",\"value\":\"默认页面结构：围绕页面核心目标安排主要内容与必要操作，保持层次清晰。\",\"kind\":\"default_assumption\",\"category\":\"page_modules\",\"action\":\"included\"},{\"id\":\"d2\",\"value\":\"默认交付：方案包含本次所需资源清单、模块边界与本地沙箱验证方法，本轮不实施。\",\"kind\":\"default_assumption\",\"category\":\"delivery\",\"action\":\"included\"}],\"unresolved\":[\"网站的具体查询对象、查询字段及接口路径\"]}"
+    }
+  ],
+  "setup": "ready"
+}

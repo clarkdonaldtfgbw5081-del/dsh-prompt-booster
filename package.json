@@ -1,0 +1,125 @@
+{
+  "name": "dsh-prompt-booster",
+  "version": "0.2.2",
+  "description": "DeepSeek Harness 提示词优化插件：把一句草稿改写为结构化任务并直接回填输入框，不自动发送。",
+  "type": "module",
+  "license": "MIT",
+  "author": "DSH Prompt Booster contributors",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/clarkdonaldtfgbw5081-del/dsh-prompt-booster.git"
+  },
+  "bugs": {
+    "url": "https://github.com/clarkdonaldtfgbw5081-del/dsh-prompt-booster/issues"
+  },
+  "homepage": "https://github.com/clarkdonaldtfgbw5081-del/dsh-prompt-booster#readme",
+  "keywords": [
+    "deepseek-harness",
+    "dsh",
+    "dsh-plugin",
+    "prompt",
+    "prompt-engineering",
+    "prompt-optimization",
+    "cordis",
+    "typert",
+    "typescript"
+  ],
+  "private": false,
+  "main": "lib/index.js",
+  "types": "lib/types/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./lib/types/index.d.ts",
+      "default": "./lib/index.js"
+    },
+    "./client": {
+      "types": "./lib/types/client/index.d.ts",
+      "default": "./lib/client.js"
+    },
+    "./core": {
+      "types": "./lib/types/core/engine.d.ts",
+      "default": "./lib/core.js"
+    },
+    "./package.json": "./package.json",
+    "./locale/*.json": "./locale/*.json"
+  },
+  "files": [
+    "lib",
+    "locale",
+    "cordis.patch.yml",
+    "README.md",
+    "CHANGELOG.md"
+  ],
+  "engines": {
+    "node": ">=22.19.0",
+    "dsh": "0.2.1-rc.2"
+  },
+  "dsh": {
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    },
+    "client": {
+      "platform": "web",
+      "inject": [
+        "@deepseek-ai/dsh-api-remotes",
+        "@deepseek-ai/dsh-client-ui-conversation",
+        "@deepseek-ai/dsh-client-ui-session"
+      ]
+    }
+  },
+  "scripts": {
+    "typecheck": "tsc -p tsconfig.host.json && tsc -p tsconfig.client.json && tsc -p tsconfig.checks.json && tsc -p tsconfig.client-checks.json",
+    "build": "node scripts/build.mjs",
+    "test": "tsx --test tests/*.test.ts tests/*.test.tsx",
+    "evals": "tsx evals/run.ts",
+    "evals:live": "tsx evals/run.ts --live",
+    "dev": "tsx demo/server.ts",
+    "smoke": "node scripts/smoke-package.mjs",
+    "check:publish": "node scripts/check-publish.mjs",
+    "verify": "npm run check:publish && npm run typecheck && npm run test && npm run evals && npm run build && npm run smoke",
+    "pack:check": "npm pack --dry-run --ignore-scripts",
+    "release:version": "node scripts/release.mjs",
+    "release:notes": "node scripts/changelog-notes.mjs",
+    "prepack": "npm run verify"
+  },
+  "dependencies": {
+    "zod": "^4.1.12"
+  },
+  "peerDependencies": {
+    "@deepseek-ai/schemastery": "3.18.5",
+    "@deepseek-ai/cordis": "4.0.5",
+    "@deepseek-ai/dsh-agent-default-model": "0.2.1-rc.2",
+    "@deepseek-ai/dsh-llm": "0.2.1-rc.2",
+    "@deepseek-ai/dsh-session": "0.2.1-rc.2",
+    "@deepseek-ai/dsh-typert-protocol": "0.2.1-rc.2",
+    "@deepseek-ai/dsh-typert-registry": "0.2.1-rc.2"
+  },
+  "devDependencies": {
+    "@deepseek-ai/schemastery": "3.18.5",
+    "@deepseek-ai/cordis": "4.0.5",
+    "@deepseek-ai/dsh-agent-default-model": "0.2.1-rc.2",
+    "@deepseek-ai/dsh-api-gateway": "0.2.1-rc.2",
+    "@deepseek-ai/dsh-api-remote-access": "0.2.1-rc.2",
+    "@deepseek-ai/dsh-api-remotes": "0.2.1-rc.2",
+    "@deepseek-ai/dsh-api-session-controller": "0.2.1-rc.2",
+    "@deepseek-ai/dsh-client-store": "0.2.1-rc.2",
+    "@deepseek-ai/dsh-client-ui-conversation": "0.2.1-rc.2",
+    "@deepseek-ai/dsh-client-ui-renderer": "0.2.1-rc.2",
+    "@deepseek-ai/dsh-client-ui-session": "0.2.1-rc.2",
+    "@deepseek-ai/dsh-client-ui-slots": "0.2.1-rc.2",
+    "@deepseek-ai/dsh-llm": "0.2.1-rc.2",
+    "@deepseek-ai/dsh-session": "0.2.1-rc.2",
+    "@deepseek-ai/dsh-typert-protocol": "0.2.1-rc.2",
+    "@deepseek-ai/dsh-typert-registry": "0.2.1-rc.2",
+    "@types/node": "^24.10.0",
+    "@types/react": "^18.3.0",
+    "@types/react-dom": "^18.3.0",
+    "@types/react-test-renderer": "^18.3.1",
+    "esbuild": "^0.25.0",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "react-test-renderer": "^18.3.1",
+    "tsx": "^4.20.0",
+    "typescript": "~5.9.3"
+  }
+}

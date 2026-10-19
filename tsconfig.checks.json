@@ -1,0 +1,5 @@
+{
+  "extends": "./tsconfig.json",
+  "include": ["demo", "tests", "evals"],
+  "exclude": ["tests/client-injection.test.ts", "node_modules", ".reference", "lib"]
+}

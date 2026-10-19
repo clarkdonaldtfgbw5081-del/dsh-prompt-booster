@@ -1,0 +1,67 @@
+{
+  "source": "configured-desktop-account-adapter",
+  "syntheticRequests": true,
+  "cases": [
+    {
+      "id": "visual",
+      "status": "ok",
+      "reason": null,
+      "warnings": [],
+      "latency_ms": 1752,
+      "attempts": 1,
+      "finish": "stop",
+      "effort": "off",
+      "outputChars": 190,
+      "syntheticModelResponse": "{\"optimized\":\"生成一个风景主题的视觉展示网页，整体呈现高级感。默认技术路线：优先沿用现有项目；独立新页面采用原生 HTML/CSS/JavaScript，不新增依赖。默认页面结构：主题主视觉、内容展示与简短介绍。默认素材：使用契合主题的可替换占位图；有用户素材时优先采用，否则选择授权可用图片。默认交付：页面完整源码及本地运行说明。完成后在本地打开页面，确认布局正常、图片能显示、无控制台报错。\",\"task_type\":\"code_gen\",\"additions\":[{\"id\":\"d1\",\"value\":\"默认技术路线：优先沿用现有项目；独立新页面采用原生 HTML/CSS/JavaScript，不新增依赖。\",\"kind\":\"default_assumption\",\"category\":\"tech_stack\",\"action\":\"included\"},{\"id\":\"d2\",\"value\":\"默认页面结构：主题主视觉、内容展示与简短介绍。\",\"kind\":\"default_assumption\",\"category\":\"page_modules\",\"action\":\"included\"},{\"id\":\"d3\",\"value\":\"默认素材：使用契合主题的可替换占位图；有用户素材时优先采用，否则选择授权可用图片。\",\"kind\":\"default_assumption\",\"category\":\"assets\",\"action\":\"included\"},{\"id\":\"d4\",\"value\":\"默认交付：页面完整源码及本地运行说明。\",\"kind\":\"default_assumption\",\"category\":\"delivery\",\"action\":\"included\"}],\"unresolved\":[\"是否有具体风景图片素材或品牌素材可用\"]}"
+    },
+    {
+      "id": "local-plan",
+      "status": "ok",
+      "reason": null,
+      "warnings": [],
+      "latency_ms": 1834,
+      "attempts": 2,
+      "finish": "stop",
+      "effort": "off",
+      "outputChars": 53,
+      "syntheticModelResponse": "{\"optimized\":\"针对现有登录页面，先给方案：梳理当前排版问题，提出具体排版调整思路及预期效果。本轮不要改代码，不新增依赖。\",\"task_type\":\"code_gen\",\"additions\":[],\"unresolved\":[\"现有登录页面的代码结构、样式方案与当前排版细节未提供\"]}"
+    },
+    {
+      "id": "writing",
+      "status": "ok",
+      "reason": null,
+      "warnings": [],
+      "latency_ms": 1357,
+      "attempts": 1,
+      "finish": "stop",
+      "effort": "off",
+      "outputChars": 55,
+      "syntheticModelResponse": "{\"optimized\":\"请写一封面向初学者的中文说明邮件，语气友好。内容应围绕要说明的事项展开，表达清楚易懂，适合初次接触的读者阅读。\",\"task_type\":\"writing\",\"additions\":[],\"unresolved\":[\"邮件需要说明的具体事项、篇幅要求及发送场景尚未提供\"]}"
+    },
+    {
+      "id": "data-app",
+      "status": "ok",
+      "reason": null,
+      "warnings": [],
+      "latency_ms": 1633,
+      "attempts": 1,
+      "finish": "stop",
+      "effort": "off",
+      "outputChars": 289,
+      "syntheticModelResponse": "{\"optimized\":\"开发一个带数据库和查询接口的网站，不新增依赖。技术路线优先沿用项目约定，只选本次应用所需组件并在本地验证；页面围绕核心目标安排主要内容与必要操作，保持层次清晰；素材用契合主题的可替换占位图，有用户素材时优先采用，否则选授权可用图片；交付本次应用所需源码与本地验证说明，确认数据库读写和查询接口在本地可跑通。\",\"task_type\":\"code_gen\",\"additions\":[{\"id\":\"d1\",\"value\":\"默认技术路线：优先沿用项目约定，仅选择本次应用所需的组件，并在本地验证。\",\"kind\":\"default_assumption\",\"category\":\"tech_stack\",\"action\":\"included\"},{\"id\":\"d2\",\"value\":\"默认页面结构：围绕页面核心目标安排主要内容与必要操作，保持层次清晰。\",\"kind\":\"default_assumption\",\"category\":\"page_modules\",\"action\":\"included\"},{\"id\":\"d3\",\"value\":\"默认素材：使用契合主题的可替换占位图；有用户素材时优先采用，否则选择授权可用图片。\",\"kind\":\"default_assumption\",\"category\":\"assets\",\"action\":\"included\"},{\"id\":\"d4\",\"value\":\"默认交付：本次应用所需源码与本地验证说明。\",\"kind\":\"default_assumption\",\"category\":\"delivery\",\"action\":\"included\"}],\"unresolved\":[\"现有项目约定与技术栈未提供\",\"数据库表结构与查询字段未提供\",\"页面具体主题与素材未提供\"]}"
+    },
+    {
+      "id": "architect-plan",
+      "status": "ok",
+      "reason": null,
+      "warnings": [],
+      "latency_ms": 1387,
+      "attempts": 1,
+      "finish": "stop",
+      "effort": "off",
+      "outputChars": 193,
+      "syntheticModelResponse": "{\"optimized\":\"使用 Architect 开发一个带查询接口的网站：先给出方案，说明网站页面结构、查询接口的输入输出与失败反馈、所需模块及数据边界，再给出实施步骤和本地验证方法；本轮先给方案，不要改代码。\",\"task_type\":\"code_gen\",\"additions\":[{\"id\":\"d1\",\"value\":\"默认页面结构：围绕页面核心目标安排主要内容与必要操作，保持层次清晰。\",\"kind\":\"default_assumption\",\"category\":\"page_modules\",\"action\":\"included\"},{\"id\":\"d2\",\"value\":\"默认素材：使用契合主题的可替换占位图；有用户素材时优先采用，否则选择授权可用图片。\",\"kind\":\"default_assumption\",\"category\":\"assets\",\"action\":\"included\"},{\"id\":\"d3\",\"value\":\"默认交付：设计方案与实施步骤，本轮不实施。\",\"kind\":\"default_assumption\",\"category\":\"delivery\",\"action\":\"included\"}],\"unresolved\":[\"网站的主题、查询对象与接口字段未提供\",\"现有项目资料与技术栈未提供\"]}"
+    }
+  ],
+  "setup": "ready"
+}

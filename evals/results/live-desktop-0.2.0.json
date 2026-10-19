@@ -1,0 +1,43 @@
+{
+  "source": "configured-desktop-account-adapter",
+  "syntheticRequests": true,
+  "cases": [
+    {
+      "id": "visual",
+      "status": "ok",
+      "reason": null,
+      "warnings": [],
+      "latency_ms": 1745,
+      "attempts": 1,
+      "finish": "stop",
+      "effort": "off",
+      "outputChars": 247,
+      "syntheticModelResponse": "{\"optimized\":\"生成一个风景主题、具有高级感的网页。独立新页面采用原生 HTML/CSS/JavaScript，不新增依赖；页面包含主题主视觉、内容展示与简短介绍；素材使用契合风景主题的可替换占位图；交付页面完整源码及本地运行说明。\",\"task_type\":\"code_gen\",\"additions\":[{\"id\":\"d1\",\"value\":\"默认技术路线：优先沿用现有项目；独立新页面采用原生 HTML/CSS/JavaScript，不新增依赖。\",\"kind\":\"default_assumption\",\"category\":\"tech_stack\",\"action\":\"included\"},{\"id\":\"d2\",\"value\":\"默认页面结构：主题主视觉、内容展示与简短介绍。\",\"kind\":\"default_assumption\",\"category\":\"page_modules\",\"action\":\"included\"},{\"id\":\"d3\",\"value\":\"默认素材：使用契合主题的可替换占位图；有用户素材时优先采用，否则选择授权可用图片。\",\"kind\":\"default_assumption\",\"category\":\"assets\",\"action\":\"included\"},{\"id\":\"d4\",\"value\":\"默认交付：页面完整源码及本地运行说明。\",\"kind\":\"default_assumption\",\"category\":\"delivery\",\"action\":\"included\"}],\"unresolved\":[\"是否已有可沿用的现有项目，以及是否有用户提供的风景素材\"]}"
+    },
+    {
+      "id": "local-plan",
+      "status": "ok",
+      "reason": null,
+      "warnings": [],
+      "latency_ms": 1459,
+      "attempts": 1,
+      "finish": "stop",
+      "effort": "off",
+      "outputChars": 75,
+      "syntheticModelResponse": "{\"optimized\":\"针对现有登录页面排版优化：先给方案，不要改代码，不新增依赖。方案说明调整哪些布局与间距、尺寸和层级，并标出需查看的真实页面或样式文件后才能确定的部分。\",\"task_type\":\"code_gen\",\"additions\":[],\"unresolved\":[\"现有登录页面的实际布局与样式文件内容\"],\"slots\":{\"goal\":\"优化现有登录页面排版，先出方案\",\"constraints\":[\"先给方案\",\"不要改代码\",\"不新增依赖\"],\"output_format\":\"排版优化方案，说明调整项及需查看真实页面后才能确定的部分\"}}"
+    },
+    {
+      "id": "writing",
+      "status": "ok",
+      "reason": null,
+      "warnings": [],
+      "latency_ms": 821,
+      "attempts": 1,
+      "finish": "stop",
+      "effort": "off",
+      "outputChars": 20,
+      "syntheticModelResponse": "{\"optimized\":\"写一封给初学者的中文说明邮件，语气友好。\",\"task_type\":\"writing\",\"additions\":[],\"unresolved\":[\"邮件需要说明的具体内容\",\"发件人身份\"]}"
+    }
+  ],
+  "setup": "ready"
+}

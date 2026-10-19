@@ -1,0 +1,6 @@
+- insert:
+    - id: prompt-booster
+      name: dsh-prompt-booster
+      config:
+        timeoutMs: 15000
+        maxOutputTokens: 4096
