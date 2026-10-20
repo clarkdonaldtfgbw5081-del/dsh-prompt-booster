@@ -1,5 +1,6 @@
 import type { BoostRequest, TaskType } from '../types.ts'
 import { classify } from './route.ts'
+import { taskClauses, type TaskClause } from './clauses.ts'
 
 export interface TaskIntent {
   task_type: TaskType
@@ -11,6 +12,7 @@ export interface TaskIntent {
   concise: boolean
   explicit_preferences: string[]
   guidance: string[]
+  steps?: Pick<TaskClause, 'text' | 'action' | 'sequential'>[]
 }
 
 /** Lightweight hints, subordinate to the user's full text; never project facts. */
@@ -18,7 +20,9 @@ export function taskIntent(request: BoostRequest): TaskIntent {
   const raw = request.raw
   const task_type = classify(raw)
   const question = /^(?:请)?(?:解释|说明为什么|为什么|如何)|^(?:please\s+)?(?:explain|why\b|what (?:is|does)\b|how (?:to|do|can|should)\b)/i.test(raw.trim())
-  const sequentialExecution = /(?:然后|再|之后|then)\s*(?:直接)?(?:实现|开发|修改|执行|编写|implement|develop|modify|execute)/i.test(raw)
+  const clauses = taskClauses(raw)
+  const sequentialExecution = clauses.some((clause, index) => index > 0 && clause.sequential && ['create', 'modify', 'test'].includes(clause.action))
+    || /(?:然后|再|之后|接着|then)\s*(?:直接)?(?:实现|开发|创建|生成|构建|搭建|修改|修复|测试|执行|编写|implement|develop|create|build|modify|fix|test|execute)/i.test(raw)
   const approvalGate = /(?:确认|批准|同意|批准|approval|confirmation).{0,12}(?:后|再|before|then)|(?:等我|待我|经我)|after (?:my |user )?(?:approval|confirmation)/i.test(raw)
   const plan = /只(?:给|做|要).{0,8}(?:方案|计划)|不要.{0,6}(?:代码|实现)|不(?:改|写|修改|编写|动)代码|(?:only|just) (?:a )?plan|do not (?:code|implement)/i.test(raw)
     || ((approvalGate || !sequentialExecution) && /先.{0,12}(?:方案|计划|设计思路)|plan first/i.test(raw))
@@ -46,6 +50,7 @@ export function taskIntent(request: BoostRequest): TaskIntent {
   if (project === 'existing' || operation === 'modify') guidance.push('沿用现有项目、结构和约定，聚焦用户要求的变更；没有读取项目，不声称已确认其技术栈或文件内容，不要求重建完整项目。')
   if (stage === 'plan' || stage === 'analysis') guidance.push('仅交付当前阶段的方案、分析或定位结论；不要附带本轮实施、改文件或交付完整源码的指令。')
   if (sequentialExecution && !approvalGate && stage === 'execution') guidance.push('保留用户要求的先分析或设计、再实施的顺序，不要截断为只给方案。')
+  if (clauses.length > 1) guidance.push('逐项保留 steps 中的明确动作和对象；保持先后顺序及确认条件，不把参考内容或数据列表当成新任务。')
   return {
     task_type, stage, operation, project, page_kind,
     is_page_task: task_type === 'code_gen' && !question && !/脚本|函数|命令行|\b(?:script|function|cli)\b/i.test(raw)
@@ -53,6 +58,7 @@ export function taskIntent(request: BoostRequest): TaskIntent {
     concise: /一句话|不要啰嗦|不要扩写|简短(?:地)?(?:描述|说明|回答|改写)|精简(?:一下)?(?:提示词|文字|描述)|(?:提示词|描述|回答|说明|措辞).{0,8}(?:简短|精简|简洁)|(?:brief|concise) (?:prompt|description|answer|rewrite)|one sentence/i.test(raw)
       || (request.preferences?.detail === 'concise' && !/详细|全面|充分展开|详尽|in detail|detailed|thorough/i.test(raw)),
     explicit_preferences, guidance,
+    ...(clauses.length > 1 ? { steps: clauses.map(({ text, action, sequential }) => ({ text, action, sequential })) } : {}),
   }
 }
 

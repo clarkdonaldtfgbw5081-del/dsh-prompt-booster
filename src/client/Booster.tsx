@@ -5,6 +5,7 @@ import { DraftHistory, type DraftSnapshot } from './draft.ts'
 import { formatNotice, noticeTitle, copyFor, type Notice } from './copy.ts'
 import { styles } from './styles.ts'
 import { OptimizeGlyph } from './OptimizeGlyph.tsx'
+import { canOptimizeDraft, planDraftEdit } from './references.ts'
 
 export interface BoosterProps {
   draft: DraftSnapshot
@@ -72,13 +73,14 @@ export function Booster(props: BoosterProps) {
     if (operation.current) return
     if (compositionActive.current) { setNotice({ key: 'composing' }); return }
     const draft = props.readDraft()
-    if (draft.locked || draft.hasReferences) {
+    if (!canOptimizeDraft(draft)) {
       setNotice({ key: draft.hasReferences ? 'references' : 'locked' })
       return
     }
     const payload: BoostRequest = {
       request_id: newRequestId(), draft_revision: draft.revision, raw: draft.text,
-      mode: 'standard', language: /[\u3400-\u9fff]/.test(draft.text) ? 'zh' : 'en', context_sources: [],
+      mode: 'standard', use_configured_mode: true, language: /[\u3400-\u9fff]/.test(draft.text) ? 'zh' : 'en', context_sources: [],
+      ...(draft.hasReferences ? { reference_fragments: draft.references!.map(row => row.clipboardText) } : {}),
     }
     if (!requestSchema.safeParse(payload).success) { setNotice({ key: 'tooLong' }); return }
     const controller = new AbortController(), id = ++sequence.current
@@ -87,7 +89,8 @@ export function Booster(props: BoosterProps) {
     try {
       const value = resultSchema.parse(await props.generate(payload, controller.signal))
       if (operation.current?.id !== id || controller.signal.aborted) return
-      if (value.request_id !== payload.request_id || value.draft_revision !== payload.draft_revision || value.raw !== payload.raw || value.mode !== payload.mode) throw new Error('mismatched_result')
+      if (value.request_id !== payload.request_id || value.draft_revision !== payload.draft_revision || value.raw !== payload.raw
+        || (!payload.use_configured_mode && value.mode !== payload.mode)) throw new Error('mismatched_result')
       if (compositionActive.current) { setNotice({ key: 'composing' }); return }
       if (value.status !== 'ok') {
         setNotice({ key: 'reason', code: value.reason_code ?? '', warnings: value.warnings })
@@ -96,8 +99,9 @@ export function Booster(props: BoosterProps) {
       // No optional suggestions are selected implicitly, even in direct mode. The host
       // already verified sources/defaults, so tolerate bookkeeping entries whose text
       // was paraphrased out of the body (see ValidationOptions.allowUnusedAdditions).
-      const validation = validateCandidate({ ...payload, context_sources: value.sources, preferences: value.preferences ?? payload.preferences }, value, [], { allowUnusedAdditions: true })
+      const validation = validateCandidate({ ...payload, mode: value.mode, context_sources: value.sources, preferences: value.preferences ?? payload.preferences }, value, [], { allowUnusedAdditions: true })
       if (validation.length) { setNotice({ key: 'reason', code: 'guard_failed', warnings: validation }); return }
+      if (!planDraftEdit(draft, value.optimized)) { setNotice({ key: 'referenceConflict' }); return }
       const applied = history.current.apply({ read: props.readDraft, replace: props.replaceDraft }, draft, value.optimized)
       emitEvent({ name: 'boost_applied', request_id: payload.request_id, ok: applied })
       if (!applied) { setNotice({ key: 'changed' }); return }
@@ -126,7 +130,7 @@ export function Booster(props: BoosterProps) {
     <button type="button" className={`pb-icon pb-main${busy ? ' pb-working' : ''}`} aria-label={busy ? copy.labels.cancel : copy.labels.optimize}
       title={busy ? copy.labels.busyTitle : composing ? copy.notices.composing : props.draft.hasReferences ? copy.labels.referencesHint : copy.labels.optimizeHint}
       onMouseDown={event => event.preventDefault()}
-      onClick={busy ? cancel : optimize} disabled={!busy && (composing || props.draft.locked || props.draft.hasReferences || !props.draft.text.trim())}>
+      onClick={busy ? cancel : optimize} disabled={!busy && (composing || !canOptimizeDraft(props.draft) || !props.draft.text.trim())}>
       <OptimizeGlyph busy={busy} />
     </button>
     {history.current.canUndo(props.draft) && <button type="button" className="pb-icon" aria-label={copy.labels.undo} title={copy.labels.undoTitle} onClick={undo} disabled={busy || composing}>↶</button>}

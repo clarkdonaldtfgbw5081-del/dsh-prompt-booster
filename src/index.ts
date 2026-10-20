@@ -65,6 +65,7 @@ export default class PromptBooster extends TypertRemoteService {
     }
     const contextStarted = performance.now()
     const controls = this.controls
+    if (request.use_configured_mode) request = requestSchema.parse({ ...request, mode: controls.mode })
     const contextDeadline = AbortSignal.timeout(controls.timeoutMs)
     let contextNotices: string[] = []
     try {

@@ -15,7 +15,7 @@
 2. 使用管理该 DSH 安装的 CLI 安装：
 
    ```powershell
-   dsh plugin --profile web add ./dsh-prompt-booster-0.2.5.tgz
+   dsh plugin --profile web add ./dsh-prompt-booster-0.2.6.tgz
    ```
 
    桌面版请使用应用安装目录中附带的 CLI，不要混用其他全局安装的 `dsh`。
@@ -33,15 +33,15 @@ npm run typecheck
 npm test
 npm run build
 npm pack
-dsh plugin --profile web add ./dsh-prompt-booster-0.2.5.tgz
+dsh plugin --profile web add ./dsh-prompt-booster-0.2.6.tgz
 ```
 
-`npm pack` 会依次执行发布前路径与密钥检查、版本一致性检查、类型检查、188 项测试、离线评测、构建、打包内容检查、产物冒烟与 tarball 冒烟；全部通过后才会生成 tarball。独立的浏览器验收另运行 `npm run test:browser`。
+`npm pack` 会依次执行发布前路径与密钥检查、版本一致性检查、类型检查、自动化测试、离线评测、构建、打包内容检查、产物冒烟与 tarball 冒烟；全部通过后才会生成 tarball。独立的浏览器验收另运行 `npm run test:browser`。
 
 ## 升级
 
 ```powershell
-dsh plugin --profile web add ./dsh-prompt-booster-0.2.5.tgz
+dsh plugin --profile web add ./dsh-prompt-booster-0.2.6.tgz
 ```
 
 安装后完全退出并重启 DSH。插件配置保存在当前 DSH profile 中；升级默认保留已有配置。
@@ -61,6 +61,7 @@ dsh plugin --profile web remove dsh-prompt-booster
 ```yaml
 - id: prompt-booster
   config:
+    mode: standard
     timeoutMs: 15000
     maxOutputTokens: 4096
     repairAttempts: 1
@@ -85,7 +86,7 @@ dsh plugin --profile web remove dsh-prompt-booster
 插件会保留原稿并显示简短失败状态，点击图标可重试。检查 DSH 当前会话的模型配置、网络和 `timeoutMs` 设置；插件不会自动重试传输错误。
 
 **输入框中有结构化引用或正在提交。**
-含结构化引用时优化入口会禁用；这是为了避免破坏引用身份。移除引用后可再次尝试。
+具有完整有效元数据的引用允许优化，但回填只能改动不跨引用的一个连续文字段。移动、重复引用或跨引用改写会保留原稿；未知或无效引用会禁用入口。引用身份与原子坐标由 DSH 管理，插件不展开其内容、不调用发送接口。提交期间仍禁用入口。
 
 **如何确认没有自动发送？**
 插件只调用输入框的原生 `insertText` 回填，不调用发送接口。是否发送始终由用户决定。

@@ -59,7 +59,7 @@ test('cancellation and session changes ignore a late response', async ({ page })
   }
 })
 
-test('guard details are readable and structured references disable the action', async ({ page }) => {
+test('guard details are readable and references without valid metadata disable the action', async ({ page }) => {
   await page.getByLabel('模拟守卫失败').check()
   await page.getByRole('button', { name: '优化提示词', exact: true }).click()
   await page.getByRole('button', { name: '完成请求' }).click()
@@ -68,6 +68,16 @@ test('guard details are readable and structured references disable the action', 
   await expect(status).toHaveAttribute('title', /无依据的数字/)
   await page.getByRole('button', { name: '切换引用' }).click()
   await expect(page.getByRole('button', { name: '优化提示词', exact: true })).toBeDisabled()
+})
+
+test('the host-selected light mode is validated and applied without expanding the task', async ({ page }) => {
+  await page.getByLabel('模拟宿主轻量模式').check()
+  await page.getByRole('button', { name: '优化提示词', exact: true }).click()
+  await page.getByRole('button', { name: '完成请求' }).click()
+  await expect(page.getByLabel('任务草稿')).toHaveValue('请写一份周报')
+  await expect(page.getByTestId('sends')).toHaveText('0')
+  await page.getByRole('button', { name: '还原原稿' }).click()
+  await expect(page.getByLabel('任务草稿')).toHaveValue('写一份周报')
 })
 
 test('DSH dark theme, reduced motion and narrow toolbars remain usable', async ({ page }) => {

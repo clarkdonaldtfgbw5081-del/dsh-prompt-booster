@@ -3,6 +3,7 @@ export type ClientLocale = 'zh' | 'en'
 export type Notice =
   | { key: 'cancelled' }
   | { key: 'references' }
+  | { key: 'referenceConflict' }
   | { key: 'locked' }
   | { key: 'composing' }
   | { key: 'tooLong' }
@@ -33,6 +34,7 @@ export interface ClientCopy {
   notices: {
     cancelled: string
     references: string
+    referenceConflict: string
     locked: string
     composing: string
     tooLong: string
@@ -51,7 +53,7 @@ const zh: ClientCopy = {
   locale: 'zh',
   guardKept: '原稿已保留。',
   guards: {
-    lost_constraint: '改写遗漏了原稿限制', lost_preference: '改写遗漏了风格或受众要求',
+    lost_constraint: '改写遗漏了原稿限制', lost_reference: '改写改变了原有引用', lost_preference: '改写遗漏了风格或受众要求',
     lost_number: '改写遗漏了原有数字', lost_identifier: '改写遗漏了技术名称、路径或标识符',
     changed_stage: '改写改变了交付阶段', changed_intent: '改写改变了任务动作',
     replaced_task: '改写偏离了原任务', lost_task_part: '改写遗漏了部分任务',
@@ -69,7 +71,7 @@ const zh: ClientCopy = {
     busy: '优化中…',
     optimizeHint: '优化后直接填入输入框；上下文与偏好可在 DSH 设置的 prompt-booster 中调整',
     busyTitle: '正在优化，点击取消',
-    referencesHint: '含结构化引用，暂不自动改写',
+    referencesHint: '保留引用身份，仅优化可安全替换的文字；跨引用改写会保留原稿',
     undoTitle: '还原优化前的原稿',
     statusBusyTitle: '正在优化，点击图标可取消',
   },
@@ -92,13 +94,14 @@ const zh: ClientCopy = {
   },
   notices: {
     cancelled: '已取消，原稿已保留。',
-    references: '含结构化引用，暂不自动改写。',
+    references: '引用信息不完整或已失效，原稿已保留。',
+    referenceConflict: '改写跨越了引用，原稿已保留；请集中改写一个文字段。',
     locked: '当前输入框不可编辑。',
     composing: '输入法正在输入，原稿已保留；确认文字后可再优化。',
     tooLong: '草稿最多 20000 字符，原稿已保留。',
     changed: '草稿已变化，未覆盖；可再次优化。',
     applied: '已优化',
-    appliedWithSources: count => `已优化 · 使用 ${count} 份参考`,
+    appliedWithSources: count => `已优化 · 已提供 ${count} 份参考`,
     failed: '优化失败，原稿已保留，请重试。',
     restored: '已还原原稿',
     undoBlocked: '草稿已被编辑或发送，无法直接还原。',
@@ -111,7 +114,7 @@ const en: ClientCopy = {
   locale: 'en',
   guardKept: 'Your draft was kept.',
   guards: {
-    lost_constraint: 'The rewrite omitted a constraint', lost_preference: 'The rewrite omitted a style or audience requirement',
+    lost_constraint: 'The rewrite omitted a constraint', lost_reference: 'The rewrite changed an existing reference', lost_preference: 'The rewrite omitted a style or audience requirement',
     lost_number: 'The rewrite omitted an original number', lost_identifier: 'The rewrite omitted a technology, path or identifier',
     changed_stage: 'The rewrite changed the delivery stage', changed_intent: 'The rewrite changed the requested action',
     replaced_task: 'The rewrite drifted from the task', lost_task_part: 'The rewrite omitted part of the task',
@@ -129,7 +132,7 @@ const en: ClientCopy = {
     busy: 'Optimizing…',
     optimizeHint: 'Writes the result directly into the composer. Adjust context and preferences in DSH settings → prompt-booster.',
     busyTitle: 'Optimization in progress; click to cancel',
-    referencesHint: 'Structured references are not rewritten automatically yet',
+    referencesHint: 'Preserves reference identity and rewrites only a safe text range. Edits crossing references keep the draft.',
     undoTitle: 'Restore the draft from before optimization',
     statusBusyTitle: 'Optimization in progress; click the icon to cancel',
   },
@@ -152,13 +155,14 @@ const en: ClientCopy = {
   },
   notices: {
     cancelled: 'Optimization cancelled. Your draft was kept.',
-    references: 'Structured references are not rewritten automatically yet.',
+    references: 'Reference metadata is incomplete or invalid. Your draft was kept.',
+    referenceConflict: 'The rewrite crossed a reference. Your draft was kept. Focus the rewrite on one text segment.',
     locked: 'The composer is not editable right now.',
     composing: 'Text composition is active. Your draft was kept. Finish composing before optimizing.',
     tooLong: 'The draft is limited to 20,000 characters. Your draft was kept.',
     changed: 'The draft changed, so the result was not applied. You can optimize again.',
     applied: 'Optimized',
-    appliedWithSources: count => `Optimized · ${count} source${count === 1 ? '' : 's'} used`,
+    appliedWithSources: count => `Optimized · ${count} source${count === 1 ? '' : 's'} provided`,
     failed: 'Optimization failed. Your draft was kept. Try again.',
     restored: 'Original draft restored',
     undoBlocked: 'The draft was edited or sent, so it cannot be restored directly.',
@@ -181,6 +185,7 @@ export function formatNotice(copy: ClientCopy, notice: Notice): string {
     case 'applied': return notice.count ? copy.notices.appliedWithSources(notice.count) : copy.notices.applied
     case 'cancelled': return copy.notices.cancelled
     case 'references': return copy.notices.references
+    case 'referenceConflict': return copy.notices.referenceConflict
     case 'locked': return copy.notices.locked
     case 'composing': return copy.notices.composing
     case 'tooLong': return copy.notices.tooLong

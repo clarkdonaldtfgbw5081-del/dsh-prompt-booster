@@ -10,7 +10,7 @@ export interface DefaultChoice { category: DefaultCategory; value: string }
 export function defaultChoices(request: BoostRequest): DefaultChoice[] {
   const raw = request.raw
   const intent = taskIntent(request)
-  if (request.preferences?.fillDefaults === false || request.mode !== 'standard' || !intent.is_page_task || intent.operation === 'modify' || intent.project === 'existing' || intent.stage === 'analysis'
+  if (request.reference_fragments?.length || request.preferences?.fillDefaults === false || request.mode !== 'standard' || !intent.is_page_task || intent.operation === 'modify' || intent.project === 'existing' || intent.stage === 'analysis'
     || /(?:不要|不允许|禁止).{0,8}(?:自行|自动).{0,8}(?:补充|设定|假设)|仅润色|只润色|do not (?:add|assume)|no assumptions/i.test(raw)
     || /(?:排查|报错|修复|为什么|分析现有|fix|debug|why|review)/i.test(raw)) return []
   const en = request.language === 'en'

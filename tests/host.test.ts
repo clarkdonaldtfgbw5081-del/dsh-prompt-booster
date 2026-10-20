@@ -234,3 +234,21 @@ test('a default-model resolution failure returns model_unavailable without the e
     assert.ok(!exposed.includes(secret))
   } finally { await ctx.fiber.dispose() }
 })
+
+test('native mode settings only override clients that explicitly request configured mode', async () => {
+  const ctx = new Context()
+  ctx.plugin(TypertRegistry); ctx.plugin(SessionStore); ctx.plugin(LlmRuntime); ctx.plugin(Access)
+  const gateway = ctx.plugin(Gateway, {})
+  ctx.plugin(DefaultModel, { provider: 'fixture', model: 'fixture-model' })
+  const plugin = ctx.plugin(PromptBooster, { mode: 'light', timeoutMs: 1000 })
+  await plugin.await(); await gateway.await()
+  try {
+    const adapter = new FixtureAdapter(); ctx.llm.registerAdapter(['fixture'], adapter)
+    const session = ctx.sessions.create()
+    const request = requestSchema.parse({ request_id: 'mode-native', draft_revision: 0, raw: '做一个登录页面', use_configured_mode: true })
+    const light = (await boostThroughGateway(ctx, session.id, request))[0]
+    assert.equal(light.mode, 'light')
+    assert.equal(light.additions.length, 0)
+    assert.equal((await boostThroughGateway(ctx, session.id, { ...request, use_configured_mode: false, mode: 'standard' }))[0].mode, 'standard')
+  } finally { await ctx.fiber.dispose() }
+})

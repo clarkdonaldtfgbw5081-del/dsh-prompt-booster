@@ -13,6 +13,7 @@ function Fixture() {
   const pending = useRef<{ request: BoostRequest; resolve(value: BoostResult): void }>()
   const [requests, setRequests] = useState(0), [sends, setSends] = useState(0)
   const [session, setSession] = useState('first'), [failure, setFailure] = useState(false)
+  const [light, setLight] = useState(false)
   const update = (draft: string) => {
     current.current = { ...current.current, draft, draftRev: current.current.draftRev + 1 }
     listeners.current.forEach(listener => listener())
@@ -48,9 +49,11 @@ function Fixture() {
     <button onClick={() => {
       const item = pending.current
       if (item) item.resolve({ ...baseResult(item.request, 'fixture'), status: failure ? 'fallback' : 'ok', optimized: failure ? item.request.raw : OPTIMIZED,
+        ...(light ? { mode: 'light', optimized: '请写一份周报' } : {}),
         reason_code: failure ? 'guard_failed' : null, warnings: failure ? ['lost_constraint', 'new_number'] : [] })
     }}>完成请求</button>
     <label><input type="checkbox" checked={failure} onChange={event => setFailure(event.target.checked)} />模拟守卫失败</label>
+    <label><input type="checkbox" checked={light} onChange={event => setLight(event.target.checked)} />模拟宿主轻量模式</label>
     <button onClick={() => setSession(value => value === 'first' ? 'second' : 'first')}>切换会话</button>
     <button onClick={() => {
       current.current = { ...current.current, occurrences: current.current.occurrences.length ? [] : [{}] }

@@ -1,6 +1,6 @@
 {
   "name": "dsh-prompt-booster",
-  "version": "0.2.5",
+  "version": "0.2.6",
   "description": "DeepSeek Harness 提示词优化插件：把一句草稿改写为结构化任务并直接回填输入框，不自动发送。",
   "type": "module",
   "license": "MIT",
@@ -74,6 +74,7 @@
     "test:browser": "playwright test",
     "evals": "tsx evals/run.ts",
     "evals:live": "tsx evals/run.ts --live",
+    "evals:review": "tsx evals/review-cli.ts",
     "dev": "tsx demo/server.ts",
     "smoke": "node scripts/smoke-package.mjs",
     "smoke:tarball": "node scripts/smoke-tarball.mjs",

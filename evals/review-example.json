@@ -1,0 +1,17 @@
+{
+  "schema": 1,
+  "provenance": "synthetic",
+  "consent_to_evaluate": true,
+  "baseline": "example-baseline",
+  "candidate": "example-candidate",
+  "cases": [
+    {
+      "id": "weekly-example",
+      "raw": "写一份周报，不超过500字",
+      "must_preserve": ["500字"],
+      "forbidden": ["支付"],
+      "baseline": { "status": "ok", "text": "写一份周报，不超过500字。", "latency_ms": 100 },
+      "candidate": { "status": "ok", "text": "请写一份周报，按重点组织内容，不超过500字。", "latency_ms": 100 }
+    }
+  ]
+}

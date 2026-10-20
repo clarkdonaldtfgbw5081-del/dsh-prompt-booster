@@ -60,7 +60,7 @@ export class BoostEngine {
           // Added templates cannot conceal a requirement absent from the model's text.
           // replaced_task must be decided before defaults are appended: the login/layout
           // defaults legitimately mention 登录/页面 and would otherwise mask a whole-task rewrite.
-          const preservation = validateCandidate(request, draft).filter(error => ['lost_constraint', 'lost_preference', 'lost_number', 'lost_identifier', 'changed_stage', 'changed_intent', 'too_long', 'empty_output', 'expanded_scope', 'replaced_task', 'lost_task_part'].includes(error))
+          const preservation = validateCandidate(request, draft).filter(error => ['lost_constraint', 'lost_reference', 'lost_preference', 'lost_number', 'lost_identifier', 'changed_stage', 'changed_intent', 'too_long', 'empty_output', 'expanded_scope', 'replaced_task', 'lost_task_part'].includes(error))
           const candidate = candidateSchema.parse(completeDefaults(request, draft))
           // A legitimate paraphrase may leave the canonical default sentence out of the
           // body, and the remaining budget may not fit appending it. Keep the entry as

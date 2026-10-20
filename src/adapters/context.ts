@@ -3,6 +3,7 @@ import { extname, isAbsolute, relative, resolve, basename } from 'node:path'
 import type { Session } from '@deepseek-ai/dsh-session'
 import type { BoostRequest, ContextSource } from '../types.ts'
 import type { ContextPolicy } from '../config.ts'
+import { selectExcerpt } from '../core/excerpts.ts'
 
 const secret = /-----BEGIN [^-]*PRIVATE KEY-----|(?:api[_-]?key|password|secret|token|密码|密钥|令牌)["']?\s*[=:：]\s*["']?\S+|Bearer\s+[A-Za-z0-9._-]+|https?:\/\/[^\s/:]+:[^\s/@]+@/i
 const referenced = /这个|这些|上面|上述|刚才|之前|根据|照着|同样|此项目|当前项目|based on|as above|the above|previous (?:message|request|task|answer|reply)|this (?:project|page|app|site|file|code|task|repo)/i
@@ -42,7 +43,8 @@ export async function collectContext(session: Session, request: BoostRequest, po
       if (!stat.isFile() || stat.size > 48000) throw new Error('file too large')
       const content = await handle.readFile({ encoding: 'utf8', signal })
       if (content.includes('\0') || secret.test(content)) throw new Error('sensitive file')
-      add('选中文件摘要：' + basename(file) + '（仅截取文本，非完整文件）', content, 'selected-file-' + sources.length)
+      const excerpt = selectExcerpt(content, request.raw, Math.min(6000, 24000 - chars))
+      add(('选中文件片段：' + basename(file) + ' · ' + excerpt.ranges + '（非完整文件）').slice(0, 160), excerpt.content, 'selected-file-' + sources.length)
     } catch { signal.throwIfAborted(); notices.push('context_file_skipped') }
     finally { await handle?.close() }
   }

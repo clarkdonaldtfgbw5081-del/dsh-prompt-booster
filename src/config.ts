@@ -10,6 +10,7 @@ export const contextPolicySchema = z.object({
 export type ContextPolicy = z.infer<typeof contextPolicySchema>
 
 export const configSchema = z.object({
+  mode: z.enum(['light', 'standard']).default('standard'),
   timeoutMs: z.number().int().min(100).max(120000).default(15000),
   maxOutputTokens: z.number().int().min(256).max(8192).default(4096),
   provider: z.string().min(1).optional(),
@@ -22,6 +23,7 @@ export type BoosterConfig = z.input<typeof configSchema>
 
 /** DSH's native Settings form persists only explicit user edits in the profile. */
 export const Config = Schema.object({
+  mode: Schema.union(['light', 'standard']).default('standard').description('优化模式：light 仅理顺表达；standard 可补充必要细节'),
   timeoutMs: Schema.number().min(100).max(120000).default(15000).description('整个优化过程的超时（毫秒）'),
   maxOutputTokens: Schema.number().min(256).max(8192).default(4096).description('每次模型输出上限'),
   provider: Schema.string().description('可选：与 model 一同指定优化模型'),

@@ -34,6 +34,8 @@ test('guard notices explain allowlisted failures without exposing unknown warnin
   assert.ok(!noticeTitle(zh, { key: 'reason', code: 'guard_failed', warnings }).includes('PRIVATE_MODEL_RESPONSE'))
   assert.equal(formatNotice(en, { key: 'reason', code: 'guard_failed', warnings: ['unknown'] }), en.reasons.guard_failed)
   assert.deepEqual(Object.keys(zh.guards).sort(), Object.keys(en.guards).sort())
+  assert.equal(zh.notices.appliedWithSources(2), '已优化 · 已提供 2 份参考')
+  assert.equal(en.notices.appliedWithSources(1), 'Optimized · 1 source provided')
 })
 
 test('English drafts receive English labels, busy state, result and undo copy', async () => {

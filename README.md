@@ -10,7 +10,7 @@ DeepSeek Harness（DSH）提示词优化插件：点一下输入框工具行的 
 [![CI](https://github.com/clarkdonaldtfgbw5081-del/dsh-prompt-booster/actions/workflows/ci.yml/badge.svg)](https://github.com/clarkdonaldtfgbw5081-del/dsh-prompt-booster/actions/workflows/ci.yml)
 [![DSH](https://img.shields.io/badge/DSH-0.2.1--rc.2-4a6b5c.svg)](https://github.com/clarkdonaldtfgbw5081-del/dsh-prompt-booster/blob/main/docs/COMPATIBILITY.md)
 [![Node](https://img.shields.io/badge/node-%3E%3D22.19-3c873a.svg)](https://github.com/clarkdonaldtfgbw5081-del/dsh-prompt-booster/blob/main/package.json)
-![version](https://img.shields.io/badge/version-0.2.5-5b7f6a.svg)
+![version](https://img.shields.io/badge/version-0.2.6-5b7f6a.svg)
 
 <img src="https://raw.githubusercontent.com/clarkdonaldtfgbw5081-del/dsh-prompt-booster/main/docs/assets/icon.png" width="72" align="right" alt="DSH Prompt Booster 图标" />
 
@@ -41,6 +41,10 @@ DeepSeek Harness（DSH）提示词优化插件：点一下输入框工具行的 
 - **安全失败**：连接错误、超时、空响应、截断、格式错误和守卫失败会保留原稿并给出简短状态，不自动重试。
 - **具体拦截原因**：区分遗漏限制、数字、任务部分、改变阶段或无依据新增等；悬停可见多项原因，未知警告正文不会显示。
 - **组词保护**：组合输入期间暂缓优化回填和还原；用户完成组词后可再次优化，不注册或改变宿主发送快捷键。
+- **组合任务**：识别明确的并列、编号和先后动作，将任务列表提供给模型并检查对象遗漏；代码引用内的连接词不作为新任务。
+- **相关片段**：从明确选中的文件中按当前需求提取原文片段，附原文行号范围；没有匹配时回退为文件开头。
+- **轻量模式**：原生设置选择 `light` 仅理顺表达，`standard` 可补充必要细节；均直接回填输入框。
+- **有限引用支持**：保留引用身份，仅执行不跨引用的一次连续文本替换；跨引用、移动或重复引用会保留原稿，含引用时不追加页面默认模板。
 
 ## 改写示意
 
@@ -66,11 +70,11 @@ DeepSeek Harness（DSH）提示词优化插件：点一下输入框工具行的 
 
 要求 DSH `0.2.1-rc.2`，并已配置可用模型。
 
-1. 从本仓库 Releases 下载 `dsh-prompt-booster-0.2.5.tgz`。
+1. 从本仓库 Releases 下载 `dsh-prompt-booster-0.2.6.tgz`。
 2. 用管理该 DSH 安装的 CLI 安装：
 
    ```powershell
-   dsh plugin --profile web add ./dsh-prompt-booster-0.2.5.tgz
+   dsh plugin --profile web add ./dsh-prompt-booster-0.2.6.tgz
    ```
 
    桌面版请使用应用安装目录自带的 CLI，不要混用其他全局安装的 `dsh`。
@@ -97,7 +101,7 @@ npm run dev
 ```powershell
 npm run verify
 npm pack
-dsh plugin --profile web add ./dsh-prompt-booster-0.2.5.tgz
+dsh plugin --profile web add ./dsh-prompt-booster-0.2.6.tgz
 ```
 
 ## 使用
@@ -117,6 +121,7 @@ dsh plugin --profile web add ./dsh-prompt-booster-0.2.5.tgz
 ```yaml
 - id: prompt-booster
   config:
+    mode: standard
     timeoutMs: 15000
     maxOutputTokens: 4096
     repairAttempts: 1
@@ -134,6 +139,7 @@ dsh plugin --profile web add ./dsh-prompt-booster-0.2.5.tgz
 
 | 配置 | 默认值 | 说明 |
 | --- | --- | --- |
+| `mode` | `standard` | `light` 仅理顺表达；`standard` 补充必要细节 |
 | `timeoutMs` | `15000` | 含上下文与修复的总时限，100–120000 ms |
 | `maxOutputTokens` | `4096` | 辅助请求输出上限；正文另有长度守卫 |
 | `provider` / `model` | 跟随会话 | 同时填写时覆盖当前会话模型 |
@@ -170,7 +176,7 @@ DSH 版本按精确版本固定。其他版本可能可以加载，但本仓库�
 ```powershell
 npm ci
 npm run typecheck   # 宿主、客户端、检查配置与浏览器夹具 TS 检查
-npm test            # 188 项自动化测试
+npm test            # 核心、交互、盲评工具与发布回归
 npm run evals       # 83 条人工构造离线样例
 npm run build       # 宿主、客户端 bundle、声明文件与本地 demo
 npm run check:pack  # 发布包必需文件与 files 白名单
@@ -206,7 +212,7 @@ cordis.patch.yml        DSH bundle 安装层
 
 - 当前是 **MVP / 早期版本**：固定 DSH 版本，完整 Web 与桌面交互、IME、原生快捷键和更广泛的真实用户质量仍需验收。
 - 本地规则是保守检查，不是语义证明；改写后请仍然看一眼输入框再发送。
-- 含结构化引用的草稿暂时禁用优化；普通附件保留在宿主输入框，不自动参与优化。
+- 结构化引用只支持不跨引用的单段改写，尚未在完整 DSH 富文本编辑器中人工验收；未知、无效或缺少元数据的引用禁用优化。普通附件保留在宿主输入框，不自动参与优化。
 - 真实模型样本仍然有限：0.2.1 桌面冒烟 5 条（另有 0.2.0 3 条与 2 条复查）；0.2.4 用 DeepSeek API `deepseek-chat` 跑 76 条非跳过样例（75 ok，1 条为注入防御命中；约束保留 29/29；P50 1141 ms / P90 1550 ms）。0.2.2 / 0.2.3 无真实模型样本，且这些数字不构成生产质量或 P90 承诺。
 - 界面状态与错误提示会随草稿语言切换；DSH 设置页字段说明和部分宿主侧文案目前仍以中文为主。
 - 主题跟随 DSH 解析后的深浅主题（`data-ds-dark-theme`），并保留系统配色回退；第三方主题未验收。

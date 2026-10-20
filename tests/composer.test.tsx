@@ -6,6 +6,7 @@ import { baseResult } from '../src/core/engine.ts'
 import { copyFor } from '../src/client/copy.ts'
 import type { BoostEvent, BoostRequest, BoostResult } from '../src/types.ts'
 import type { DraftSnapshot } from '../src/client/draft.ts'
+import type { DraftReference } from '../src/client/references.ts'
 
 const ORIGINAL = '写一份周报'
 const OPTIMIZED = '请写一份周报，按重点组织内容。'
@@ -19,7 +20,7 @@ interface ComposerInputState {
   attachmentIds: readonly string[]
   draftRev: number
   phase: 'plain' | 'adjudicating' | 'claimed' | 'submitting'
-  occurrences: readonly { occurrenceId: number }[]
+  occurrences: readonly (Partial<DraftReference> & { occurrenceId: number })[]
   queue: readonly unknown[]
 }
 interface ComposerTokenSpan {
@@ -85,6 +86,7 @@ function setup(options: FixtureOptions = {}) {
     revision: input.draftRev,
     locked: input.phase !== 'plain',
     hasReferences: input.occurrences.length > 0,
+    references: input.occurrences as readonly DraftReference[],
   })
   // SnapshotSelectorHook contract: use a real external store instead of a plain
   // getter so writes observed by replaceDraft reach React like the real store.
@@ -103,7 +105,13 @@ function setup(options: FixtureOptions = {}) {
       insertText(text, span) {
         inserts.push({ text, span })
         if (options.insertText) return options.insertText(text, span)
-        publish({ ...input, draft: text, draftRev: input.draftRev + 1 })
+        const clipboard = (offset: number) => offset + input.occurrences.reduce((sum, row) => {
+          const detectStart = row.offset! - input.occurrences.filter(previous => previous.offset! < row.offset!).reduce((delta, previous) => delta + previous.length! - 1, 0)
+          return sum + (offset > detectStart ? row.length! - 1 : 0)
+        }, 0)
+        const start = clipboard(span.start), end = clipboard(span.end)
+        publish({ ...input, draft: input.draft.slice(0, start) + text + input.draft.slice(end), draftRev: input.draftRev + 1,
+          occurrences: input.occurrences.map(row => ({ ...row, offset: row.offset! >= end ? row.offset! + text.length - (end - start) : row.offset })) })
         return true
       },
       persistDraft() {
@@ -269,4 +277,36 @@ test('structured references and a busy composer disable the control and never ca
       assert.equal(view.statusText(), copyFor(ORIGINAL).notices[notice])
     } finally { view.unmount() }
   }
+})
+
+test('the real composer slot preserves reference identity through one atomic edit and guarded restore', async () => {
+  const view = setup({ text: '@guide 写一份周报' })
+  try {
+    view.render()
+    const reference: DraftReference = { occurrenceId: 7, source: 'file', ref: 'guide', label: 'guide', clipboardText: '@guide', offset: 0, length: 6 }
+    view.setInput({ occurrences: [reference] })
+    assert.equal(view.button('优化提示词').props.disabled, false)
+    view.start()
+    assert.deepEqual(view.generated[0].reference_fragments, ['@guide'])
+    await view.complete({ optimized: '@guide 请写一份周报' })
+    assert.deepEqual(view.inserts[0], { text: '请', span: { start: 2, end: 2, draftRev: 1 } })
+    assert.equal(view.readDraft().references?.[0].occurrenceId, 7)
+    act(() => { view.button('还原原稿').props.onClick() })
+    assert.equal(view.readDraft().text, '@guide 写一份周报')
+    assert.deepEqual(view.readDraft().references, [reference])
+    assert.equal(view.persists(), 2)
+  } finally { view.unmount() }
+})
+
+test('a rewrite spanning both sides of a reference never writes to the composer', async () => {
+  const view = setup({ text: '根据 @guide 写一份周报' })
+  try {
+    view.render()
+    view.setInput({ occurrences: [{ occurrenceId: 7, source: 'file', ref: 'guide', label: 'guide', clipboardText: '@guide', offset: 3, length: 6 }] })
+    view.start()
+    await view.complete({ optimized: '请根据 @guide 写一份周报，按重点组织内容。' })
+    assert.equal(view.inserts.length, 0)
+    assert.equal(view.readDraft().text, '根据 @guide 写一份周报')
+    assert.match(view.statusText(), /跨越了引用/)
+  } finally { view.unmount() }
 })

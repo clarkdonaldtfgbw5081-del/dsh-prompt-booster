@@ -16,6 +16,8 @@ export const requestSchema = z.object({
   draft_revision: z.number().int().nonnegative(),
   raw: z.string().max(20000),
   mode: z.enum(['light', 'standard']).default('standard'),
+  use_configured_mode: z.boolean().optional(),
+  reference_fragments: z.array(z.string().min(1).max(2000)).max(32).optional(),
   language: z.enum(['zh', 'en']).default('zh'),
   context_sources: z.array(sourceSchema).max(8).default([]),
   preferences: preferencesSchema.optional(),
@@ -24,6 +26,10 @@ export const requestSchema = z.object({
     ctx.addIssue({ code: 'custom', message: '资料 ID 不可重复' })
   if (request.context_sources.reduce((n, s) => n + s.content.length, 0) > 24000)
     ctx.addIssue({ code: 'custom', message: '资料总长度超过 24000 字符' })
+  if (request.reference_fragments?.some(text => !request.raw.includes(text)))
+    ctx.addIssue({ code: 'custom', message: '引用文本不在当前草稿中' })
+  if ((request.reference_fragments?.reduce((sum, text) => sum + text.length, 0) ?? 0) > request.raw.length)
+    ctx.addIssue({ code: 'custom', message: '引用文本总长度超过草稿长度' })
 })
 export const taskTypes = ['code_gen', 'debug', 'research', 'writing', 'analysis', 'casual', 'other'] as const
 export const additionSchema = z.object({

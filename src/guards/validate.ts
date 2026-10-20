@@ -234,6 +234,9 @@ export function validateCandidate(request: BoostRequest, candidate: Candidate, s
   const max = textBudget(request)
   if (codepoints(body) > max) errors.push('too_long')
   if (!body.trim()) errors.push('empty_output')
+  for (const fragment of request.reference_fragments ?? []) {
+    if (body.split(fragment).length !== request.raw.split(fragment).length) errors.push('lost_reference')
+  }
   for (const fragment of protectedFragments(request.raw)) if (!body.includes(fragment) && !preservesPhase(fragment, body)) errors.push('lost_constraint')
   const intent = taskIntent(request)
   for (const preference of intent.explicit_preferences) if (!body.includes(preference)) errors.push('lost_preference')

@@ -1,3 +1,5 @@
+import { taskClauses } from '../core/clauses.ts'
+
 /** Small, explicit wording families; not a general semantic-equivalence claim. */
 const families = [
   ['卡顿', '运行缓慢', '加载缓慢', '性能瓶颈', '性能问题'],
@@ -11,9 +13,6 @@ const families = [
   ['uninstall', 'uninstallation'],
 ] as const
 
-const action = '(?:编写|撰写|写|补充|整理|优化|调整|改进|实现|开发|创建|生成|修复|排查|分析|对比|研究|翻译|验证|测试|输出|添加|总结|write|build|create|add|include|fix|modify|improve|analyze|analyse|translate|compare|verify|test|document|summarize)'
-const actionStart = new RegExp('^\\s*(?:(?:请帮我|帮我|请|先|再|please)\\s*)?' + action + '\\s*', 'i')
-const connector = new RegExp('(?:[；;\\n]+|(?:并且|同时|还要|以及|并|\\band\\b|\\bthen\\b)\\s*)(?=' + action + ')', 'i')
 const genericTarget = /说明|文档|指引|步骤|详情|流程|方案|\b(?:docs?|documentation|steps?|details|instructions?)\b/gi
 
 function familyIds(text: string): string[] {
@@ -33,9 +32,8 @@ export function matchesTaskAnchor(anchor: string, body: string): boolean {
 
 /** Check only explicitly joined action clauses; data lists and quoted code are not split. */
 export function missingTaskPart(raw: string, body: string, lexical: (value: string) => string[]): boolean {
-  if (/```|`/.test(raw)) return false
-  const parts = raw.split(connector).filter(part => actionStart.test(part))
-    .map(part => part.replace(actionStart, '').replace(genericTarget, '').trim())
+  const parts = taskClauses(raw)
+    .map(part => part.target.replace(genericTarget, '').trim())
     .filter(part => part.length >= 2)
   if (parts.length < 2) return false
   const anchors = parts.map(part => taskAnchors(part, lexical))

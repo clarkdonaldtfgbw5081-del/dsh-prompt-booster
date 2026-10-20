@@ -15,3 +15,19 @@
 建议覆盖：风景展示页、登录页、管理后台、作品集、修改现有排版、网页文案、故障定位、解释性提问、研究比较、数据分析、面向初学者的友好说明，以及含明确字数和交付阶段的请求。
 
 若关键要求丢失、阶段改变或事实被编造，即使表达更流畅也应判为失败。另行记录模型路由、版本、延迟和失败状态；不要只比较成功样本，也不要把一次较好输出当成整体质量提升的证明。
+
+## 离线盲评工具
+
+`npm run evals:review` 只处理显式导入的数据，不读取聊天历史、不调用模型。以 review-example.json 为格式模板；它是人工示例，不能冒充真实需求或真实模型输出。真实样本必须先经用户同意并脱敏，将 provenance 标为 user-approved，consent_to_evaluate 设为 true。工具只能核对声明，不能替代人工确认。
+
+```sh
+npm run evals:review -- prepare evals/review-example.json .local/review-example
+# 评审者只看 blind.json 并填写 scores.json，不向其提供 key.private.json 或原始数据集。
+npm run evals:review -- summarize evals/review-example.json .local/review-example/key.private.json .local/review-example/scores.json .local/review-summary.json
+```
+
+每侧按 intent / completeness / usefulness 打 0–2 分，preferred 填 A / B / tie / neither。0 表示失败，1 表示部分满足，2 表示满足。原意或完整性为 0 会独立计为关键失败，不会被总分掩盖。工具要求每个案例恰好一份完整评分，并用指纹拒绝盲评准备后改动过的数据集。
+
+盲评文件含草稿和优化正文，只能生成到 Git 忽略的 .local/ 新子目录，默认不对外公开。摘要不含正文，区分真实同意样本与构造数据，报告总尝试数、可用覆盖率、胜出 / 平局 / 均不满意、关键失败、均分、确定性逐字检查分母和 P90；失败请求不会从覆盖率分母移除。工具不自动判断守卫误拦截，也不推断下游任务完成率，这两项需要带原因的额外人工评价。
+
+0.2.6 当前只验证工具和构造回归，尚未获得新增的用户确认样本、人工评分或新一轮真实模型观测；不据此宣称需求匹配率提升。

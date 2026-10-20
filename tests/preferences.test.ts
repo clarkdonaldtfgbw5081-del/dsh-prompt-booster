@@ -11,6 +11,8 @@ test('explicit persisted preferences are described by a native live Settings sch
   assert.ok(JSON.stringify(schema).includes('recentMessages'))
   const saved = configSchema.parse({ preferences: { detail: 'concise', tone: 'formal', fillDefaults: false } })
   assert.equal(saved.preferences.detail, 'concise')
+  assert.equal(saved.mode, 'standard')
+  assert.equal(configSchema.parse({ mode: 'light' }).mode, 'light')
   assert.deepEqual(preferencesSchema.parse({}), { detail: 'auto', tone: 'auto', fillDefaults: true })
 })
 test('preferences remain subordinate to explicit task requirements', () => {

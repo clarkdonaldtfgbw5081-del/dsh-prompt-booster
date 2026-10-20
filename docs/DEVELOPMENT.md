@@ -27,6 +27,8 @@ npm run smoke:tarball
 npm run verify
 ```
 
+需求盲评工具为 `npm run evals:review`，操作说明与证据边界见 [evals/QUALITY.md](../evals/QUALITY.md)。它只处理明确导入的数据，在 .local/ 生成包含正文的盲评材料；不自动采集会话或调用模型。
+
 浏览器集成测试独立运行：`npx playwright install chromium` 后执行 `npm run test:browser`。CI 的 browser 任务在 Ubuntu / Windows 执行；测试与人工验收边界见 [INTERACTION-ACCEPTANCE.md](./INTERACTION-ACCEPTANCE.md)。浏览器夹具使用独立 tsconfig.browser.json，避免 DSH 宿主与客户端声明合并。
 
 `npm run check:publish` 扫描 git 可见的工作区文件，检查本地目录、备份、盘符路径和常见密钥模式；嵌套 `.env` 文件也禁止进入提交，安全的 `.env.example` 可保留并接受扫描。`pre-commit` 使用 `node scripts/check-publish.mjs --staged` 检查实际暂存内容，避免未暂存的清理掩盖待提交密钥。扫描包括无扩展名文本，不读取 Git 历史，不能替代完整的密钥审计。
