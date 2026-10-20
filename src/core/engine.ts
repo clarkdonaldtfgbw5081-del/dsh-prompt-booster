@@ -58,9 +58,15 @@ export class BoostEngine {
         try {
           const draft = completeDefaults(request, parseCandidate(response, request), false)
           // Added templates cannot conceal a requirement absent from the model's text.
-          const preservation = validateCandidate(request, draft).filter(error => ['lost_constraint', 'lost_preference', 'lost_number', 'lost_identifier', 'changed_stage', 'changed_intent', 'too_long', 'empty_output', 'expanded_scope'].includes(error))
+          // replaced_task must be decided before defaults are appended: the login/layout
+          // defaults legitimately mention 登录/页面 and would otherwise mask a whole-task rewrite.
+          const preservation = validateCandidate(request, draft).filter(error => ['lost_constraint', 'lost_preference', 'lost_number', 'lost_identifier', 'changed_stage', 'changed_intent', 'too_long', 'empty_output', 'expanded_scope', 'replaced_task', 'lost_task_part'].includes(error))
           const candidate = candidateSchema.parse(completeDefaults(request, draft))
-          errors = preservation.length ? preservation : validateCandidate(request, candidate)
+          // A legitimate paraphrase may leave the canonical default sentence out of the
+          // body, and the remaining budget may not fit appending it. Keep the entry as
+          // identifier authority (its source/default was already verified) without
+          // treating bookkeeping drift as an unusable rewrite. Body scope checks stay.
+          errors = preservation.length ? preservation : validateCandidate(request, candidate, [], { allowUnusedAdditions: true })
           if (!errors.length) return Object.assign(result, candidate, { status: candidate.optimized === request.raw ? 'skipped' : 'ok', reason_code: null, warnings: [] })
         } catch { errors = ['invalid_json_or_schema']; failureCode = 'model_format_error' }
         result.reason_code = failureCode; result.warnings = errors

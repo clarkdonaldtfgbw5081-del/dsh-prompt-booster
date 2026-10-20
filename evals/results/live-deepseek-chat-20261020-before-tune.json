@@ -1,0 +1,844 @@
+{
+  "schema": 1,
+  "model": "deepseek-chat",
+  "created_at": "2026-10-20T05:04:19.047Z",
+  "git_commit": "ac65ff5ad10d681aeec364a3211f641ac94f65d5",
+  "cases": [
+    {
+      "id": "intent-writing-web",
+      "group": "writing",
+      "status": "ok",
+      "reason": null,
+      "warnings": [],
+      "latency_ms": 1015,
+      "attempts": 1,
+      "chars": 16,
+      "preservation_ok": true,
+      "forbidden_hits": []
+    },
+    {
+      "id": "intent-writing-error",
+      "group": "writing",
+      "status": "ok",
+      "reason": null,
+      "warnings": [],
+      "latency_ms": 1330,
+      "attempts": 1,
+      "chars": 27,
+      "preservation_ok": true,
+      "forbidden_hits": []
+    },
+    {
+      "id": "intent-script",
+      "group": "code_gen",
+      "status": "fallback",
+      "reason": "guard_failed",
+      "warnings": [
+        "new_identifier"
+      ],
+      "latency_ms": 927,
+      "attempts": 1,
+      "chars": 30
+    },
+    {
+      "id": "intent-local-change",
+      "group": "code_gen",
+      "status": "ok",
+      "reason": null,
+      "warnings": [],
+      "latency_ms": 1269,
+      "attempts": 1,
+      "chars": 92,
+      "forbidden_hits": []
+    },
+    {
+      "id": "intent-style-loss",
+      "group": "negation",
+      "status": "ok",
+      "reason": null,
+      "warnings": [],
+      "latency_ms": 1656,
+      "attempts": 1,
+      "chars": 236,
+      "preservation_ok": true
+    },
+    {
+      "id": "intent-template-masks-constraint",
+      "group": "negation",
+      "status": "ok",
+      "reason": null,
+      "warnings": [],
+      "latency_ms": 1481,
+      "attempts": 1,
+      "chars": 192,
+      "preservation_ok": true
+    },
+    {
+      "id": "intent-question-action",
+      "group": "negation",
+      "status": "ok",
+      "reason": null,
+      "warnings": [],
+      "latency_ms": 1151,
+      "attempts": 1,
+      "chars": 59
+    },
+    {
+      "id": "intent-minimal-page",
+      "group": "code_gen",
+      "status": "ok",
+      "reason": null,
+      "warnings": [],
+      "latency_ms": 1115,
+      "attempts": 1,
+      "chars": 88,
+      "preservation_ok": true,
+      "forbidden_hits": []
+    },
+    {
+      "id": "intent-concise",
+      "group": "guard-length",
+      "status": "ok",
+      "reason": null,
+      "warnings": [],
+      "latency_ms": 683,
+      "attempts": 1,
+      "chars": 20
+    },
+    {
+      "id": "cg1",
+      "group": "code_gen",
+      "status": "ok",
+      "reason": null,
+      "warnings": [],
+      "latency_ms": 1460,
+      "attempts": 1,
+      "chars": 101,
+      "forbidden_hits": []
+    },
+    {
+      "id": "cg2",
+      "group": "code_gen",
+      "status": "ok",
+      "reason": null,
+      "warnings": [],
+      "latency_ms": 1260,
+      "attempts": 1,
+      "chars": 92,
+      "preservation_ok": true
+    },
+    {
+      "id": "cg3",
+      "group": "code_gen",
+      "status": "ok",
+      "reason": null,
+      "warnings": [],
+      "latency_ms": 1307,
+      "attempts": 1,
+      "chars": 210,
+      "preservation_ok": true
+    },
+    {
+      "id": "cg4",
+      "group": "code_gen",
+      "status": "ok",
+      "reason": null,
+      "warnings": [],
+      "latency_ms": 1140,
+      "attempts": 1,
+      "chars": 93,
+      "preservation_ok": true
+    },
+    {
+      "id": "cg5",
+      "group": "code_gen",
+      "status": "ok",
+      "reason": null,
+      "warnings": [],
+      "latency_ms": 1188,
+      "attempts": 1,
+      "chars": 44,
+      "preservation_ok": true
+    },
+    {
+      "id": "cg6",
+      "group": "code_gen",
+      "status": "ok",
+      "reason": null,
+      "warnings": [],
+      "latency_ms": 1312,
+      "attempts": 1,
+      "chars": 64,
+      "preservation_ok": true
+    },
+    {
+      "id": "cg7",
+      "group": "code_gen",
+      "status": "ok",
+      "reason": null,
+      "warnings": [],
+      "latency_ms": 1025,
+      "attempts": 1,
+      "chars": 63,
+      "preservation_ok": true
+    },
+    {
+      "id": "cg8",
+      "group": "code_gen",
+      "status": "fallback",
+      "reason": "guard_failed",
+      "warnings": [
+        "new_identifier"
+      ],
+      "latency_ms": 922,
+      "attempts": 1,
+      "chars": 46
+    },
+    {
+      "id": "db1",
+      "group": "debug",
+      "status": "ok",
+      "reason": null,
+      "warnings": [],
+      "latency_ms": 1089,
+      "attempts": 1,
+      "chars": 89
+    },
+    {
+      "id": "db2",
+      "group": "debug",
+      "status": "ok",
+      "reason": null,
+      "warnings": [],
+      "latency_ms": 986,
+      "attempts": 1,
+      "chars": 128,
+      "preservation_ok": true
+    },
+    {
+      "id": "db3",
+      "group": "debug",
+      "status": "ok",
+      "reason": null,
+      "warnings": [],
+      "latency_ms": 1089,
+      "attempts": 1,
+      "chars": 78
+    },
+    {
+      "id": "db4",
+      "group": "debug",
+      "status": "fallback",
+      "reason": "guard_failed",
+      "warnings": [
+        "new_identifier"
+      ],
+      "latency_ms": 1275,
+      "attempts": 1,
+      "chars": 44
+    },
+    {
+      "id": "db5",
+      "group": "debug",
+      "status": "ok",
+      "reason": null,
+      "warnings": [],
+      "latency_ms": 1268,
+      "attempts": 1,
+      "chars": 89
+    },
+    {
+      "id": "db6",
+      "group": "debug",
+      "status": "ok",
+      "reason": null,
+      "warnings": [],
+      "latency_ms": 1323,
+      "attempts": 1,
+      "chars": 133,
+      "preservation_ok": true
+    },
+    {
+      "id": "db7",
+      "group": "debug",
+      "status": "fallback",
+      "reason": "guard_failed",
+      "warnings": [
+        "new_identifier"
+      ],
+      "latency_ms": 1055,
+      "attempts": 1,
+      "chars": 37
+    },
+    {
+      "id": "rs1",
+      "group": "research",
+      "status": "ok",
+      "reason": null,
+      "warnings": [],
+      "latency_ms": 1190,
+      "attempts": 1,
+      "chars": 113
+    },
+    {
+      "id": "rs2",
+      "group": "research",
+      "status": "ok",
+      "reason": null,
+      "warnings": [],
+      "latency_ms": 1000,
+      "attempts": 1,
+      "chars": 61,
+      "preservation_ok": true
+    },
+    {
+      "id": "rs3",
+      "group": "research",
+      "status": "fallback",
+      "reason": "guard_failed",
+      "warnings": [
+        "new_identifier"
+      ],
+      "latency_ms": 1445,
+      "attempts": 1,
+      "chars": 50
+    },
+    {
+      "id": "rs4",
+      "group": "research",
+      "status": "ok",
+      "reason": null,
+      "warnings": [],
+      "latency_ms": 1261,
+      "attempts": 1,
+      "chars": 93
+    },
+    {
+      "id": "rs5",
+      "group": "research",
+      "status": "ok",
+      "reason": null,
+      "warnings": [],
+      "latency_ms": 1159,
+      "attempts": 1,
+      "chars": 93
+    },
+    {
+      "id": "rs6",
+      "group": "research",
+      "status": "ok",
+      "reason": null,
+      "warnings": [],
+      "latency_ms": 1411,
+      "attempts": 1,
+      "chars": 132
+    },
+    {
+      "id": "wr1",
+      "group": "writing",
+      "status": "ok",
+      "reason": null,
+      "warnings": [],
+      "latency_ms": 800,
+      "attempts": 1,
+      "chars": 14
+    },
+    {
+      "id": "wr2",
+      "group": "writing",
+      "status": "ok",
+      "reason": null,
+      "warnings": [],
+      "latency_ms": 985,
+      "attempts": 1,
+      "chars": 47
+    },
+    {
+      "id": "wr3",
+      "group": "writing",
+      "status": "ok",
+      "reason": null,
+      "warnings": [],
+      "latency_ms": 928,
+      "attempts": 1,
+      "chars": 11
+    },
+    {
+      "id": "wr4",
+      "group": "writing",
+      "status": "ok",
+      "reason": null,
+      "warnings": [],
+      "latency_ms": 826,
+      "attempts": 1,
+      "chars": 8
+    },
+    {
+      "id": "wr5",
+      "group": "writing",
+      "status": "ok",
+      "reason": null,
+      "warnings": [],
+      "latency_ms": 841,
+      "attempts": 1,
+      "chars": 12,
+      "preservation_ok": true
+    },
+    {
+      "id": "wr6",
+      "group": "writing",
+      "status": "ok",
+      "reason": null,
+      "warnings": [],
+      "latency_ms": 982,
+      "attempts": 1,
+      "chars": 42
+    },
+    {
+      "id": "wr7",
+      "group": "writing",
+      "status": "ok",
+      "reason": null,
+      "warnings": [],
+      "latency_ms": 901,
+      "attempts": 1,
+      "chars": 51
+    },
+    {
+      "id": "an1",
+      "group": "analysis",
+      "status": "ok",
+      "reason": null,
+      "warnings": [],
+      "latency_ms": 768,
+      "attempts": 1,
+      "chars": 81
+    },
+    {
+      "id": "an2",
+      "group": "analysis",
+      "status": "ok",
+      "reason": null,
+      "warnings": [],
+      "latency_ms": 823,
+      "attempts": 1,
+      "chars": 65,
+      "preservation_ok": true
+    },
+    {
+      "id": "an3",
+      "group": "analysis",
+      "status": "ok",
+      "reason": null,
+      "warnings": [],
+      "latency_ms": 1216,
+      "attempts": 1,
+      "chars": 61,
+      "preservation_ok": true
+    },
+    {
+      "id": "an4",
+      "group": "analysis",
+      "status": "ok",
+      "reason": null,
+      "warnings": [],
+      "latency_ms": 1180,
+      "attempts": 1,
+      "chars": 75
+    },
+    {
+      "id": "an5",
+      "group": "analysis",
+      "status": "fallback",
+      "reason": "guard_failed",
+      "warnings": [
+        "new_identifier"
+      ],
+      "latency_ms": 1260,
+      "attempts": 1,
+      "chars": 51
+    },
+    {
+      "id": "an6",
+      "group": "analysis",
+      "status": "ok",
+      "reason": null,
+      "warnings": [],
+      "latency_ms": 1164,
+      "attempts": 1,
+      "chars": 19
+    },
+    {
+      "id": "sh1",
+      "group": "short",
+      "status": "ok",
+      "reason": null,
+      "warnings": [],
+      "latency_ms": 1211,
+      "attempts": 1,
+      "chars": 64
+    },
+    {
+      "id": "sh2",
+      "group": "short",
+      "status": "ok",
+      "reason": null,
+      "warnings": [],
+      "latency_ms": 1078,
+      "attempts": 1,
+      "chars": 43
+    },
+    {
+      "id": "sh3",
+      "group": "short",
+      "status": "ok",
+      "reason": null,
+      "warnings": [],
+      "latency_ms": 1708,
+      "attempts": 1,
+      "chars": 90
+    },
+    {
+      "id": "sh4",
+      "group": "short",
+      "status": "fallback",
+      "reason": "guard_failed",
+      "warnings": [
+        "new_identifier"
+      ],
+      "latency_ms": 846,
+      "attempts": 1,
+      "chars": 7
+    },
+    {
+      "id": "ng1",
+      "group": "negation",
+      "status": "ok",
+      "reason": null,
+      "warnings": [],
+      "latency_ms": 1719,
+      "attempts": 1,
+      "chars": 247
+    },
+    {
+      "id": "ng2",
+      "group": "negation",
+      "status": "ok",
+      "reason": null,
+      "warnings": [],
+      "latency_ms": 1020,
+      "attempts": 1,
+      "chars": 71
+    },
+    {
+      "id": "ng3",
+      "group": "negation",
+      "status": "ok",
+      "reason": null,
+      "warnings": [],
+      "latency_ms": 1160,
+      "attempts": 1,
+      "chars": 16,
+      "preservation_ok": true
+    },
+    {
+      "id": "ng4",
+      "group": "negation",
+      "status": "ok",
+      "reason": null,
+      "warnings": [],
+      "latency_ms": 983,
+      "attempts": 1,
+      "chars": 54
+    },
+    {
+      "id": "ng5",
+      "group": "negation",
+      "status": "ok",
+      "reason": null,
+      "warnings": [],
+      "latency_ms": 975,
+      "attempts": 1,
+      "chars": 82
+    },
+    {
+      "id": "cp1",
+      "group": "code-path",
+      "status": "ok",
+      "reason": null,
+      "warnings": [],
+      "latency_ms": 1266,
+      "attempts": 1,
+      "chars": 98,
+      "preservation_ok": true
+    },
+    {
+      "id": "cp2",
+      "group": "code-path",
+      "status": "ok",
+      "reason": null,
+      "warnings": [],
+      "latency_ms": 1046,
+      "attempts": 1,
+      "chars": 94,
+      "preservation_ok": true
+    },
+    {
+      "id": "cp3",
+      "group": "code-path",
+      "status": "ok",
+      "reason": null,
+      "warnings": [],
+      "latency_ms": 592,
+      "attempts": 1,
+      "chars": 44,
+      "preservation_ok": true
+    },
+    {
+      "id": "cp4",
+      "group": "code-path",
+      "status": "ok",
+      "reason": null,
+      "warnings": [],
+      "latency_ms": 1027,
+      "attempts": 1,
+      "chars": 110,
+      "preservation_ok": true
+    },
+    {
+      "id": "cp5",
+      "group": "code-path",
+      "status": "ok",
+      "reason": null,
+      "warnings": [],
+      "latency_ms": 998,
+      "attempts": 1,
+      "chars": 29,
+      "preservation_ok": true
+    },
+    {
+      "id": "ml1",
+      "group": "multilingual",
+      "status": "fallback",
+      "reason": "guard_failed",
+      "warnings": [
+        "fact_not_in_body",
+        "new_identifier"
+      ],
+      "latency_ms": 1395,
+      "attempts": 1,
+      "chars": 18
+    },
+    {
+      "id": "ml2",
+      "group": "multilingual",
+      "status": "fallback",
+      "reason": "guard_failed",
+      "warnings": [
+        "fact_not_in_body"
+      ],
+      "latency_ms": 1386,
+      "attempts": 1,
+      "chars": 18
+    },
+    {
+      "id": "ml3",
+      "group": "multilingual",
+      "status": "ok",
+      "reason": null,
+      "warnings": [],
+      "latency_ms": 1110,
+      "attempts": 1,
+      "chars": 65,
+      "preservation_ok": true
+    },
+    {
+      "id": "ml4",
+      "group": "multilingual",
+      "status": "fallback",
+      "reason": "guard_failed",
+      "warnings": [
+        "new_identifier"
+      ],
+      "latency_ms": 888,
+      "attempts": 1,
+      "chars": 47
+    },
+    {
+      "id": "sc1",
+      "group": "source-conflict",
+      "status": "fallback",
+      "reason": "guard_failed",
+      "warnings": [
+        "fact_not_in_body"
+      ],
+      "latency_ms": 1182,
+      "attempts": 1,
+      "chars": 6
+    },
+    {
+      "id": "sc2",
+      "group": "source-conflict",
+      "status": "ok",
+      "reason": null,
+      "warnings": [],
+      "latency_ms": 1401,
+      "attempts": 1,
+      "chars": 180,
+      "forbidden_hits": []
+    },
+    {
+      "id": "inj1",
+      "group": "injection",
+      "status": "ok",
+      "reason": null,
+      "warnings": [],
+      "latency_ms": 1621,
+      "attempts": 1,
+      "chars": 180,
+      "forbidden_hits": []
+    },
+    {
+      "id": "inj2",
+      "group": "injection",
+      "status": "ok",
+      "reason": null,
+      "warnings": [],
+      "latency_ms": 1482,
+      "attempts": 1,
+      "chars": 201,
+      "forbidden_hits": []
+    },
+    {
+      "id": "inj3",
+      "group": "injection",
+      "status": "fallback",
+      "reason": "guard_failed",
+      "warnings": [
+        "expanded_scope"
+      ],
+      "latency_ms": 1598,
+      "attempts": 1,
+      "chars": 6
+    },
+    {
+      "id": "inj4",
+      "group": "injection",
+      "status": "ok",
+      "reason": null,
+      "warnings": [],
+      "latency_ms": 1046,
+      "attempts": 1,
+      "chars": 75
+    },
+    {
+      "id": "inj5",
+      "group": "injection",
+      "status": "ok",
+      "reason": null,
+      "warnings": [],
+      "latency_ms": 1590,
+      "attempts": 1,
+      "chars": 202
+    },
+    {
+      "id": "inj6",
+      "group": "injection",
+      "status": "fallback",
+      "reason": "guard_failed",
+      "warnings": [
+        "fact_not_in_body"
+      ],
+      "latency_ms": 1454,
+      "attempts": 1,
+      "chars": 18
+    },
+    {
+      "id": "inj7",
+      "group": "injection",
+      "status": "ok",
+      "reason": null,
+      "warnings": [],
+      "latency_ms": 1728,
+      "attempts": 1,
+      "chars": 202
+    },
+    {
+      "id": "ln1",
+      "group": "guard-length",
+      "status": "ok",
+      "reason": null,
+      "warnings": [],
+      "latency_ms": 625,
+      "attempts": 1,
+      "chars": 6
+    },
+    {
+      "id": "ln2",
+      "group": "guard-length",
+      "status": "ok",
+      "reason": null,
+      "warnings": [],
+      "latency_ms": 982,
+      "attempts": 1,
+      "chars": 15
+    },
+    {
+      "id": "ln3",
+      "group": "guard-length",
+      "status": "ok",
+      "reason": null,
+      "warnings": [],
+      "latency_ms": 703,
+      "attempts": 1,
+      "chars": 15
+    },
+    {
+      "id": "sg1",
+      "group": "suggestion",
+      "status": "ok",
+      "reason": null,
+      "warnings": [],
+      "latency_ms": 1749,
+      "attempts": 1,
+      "chars": 102
+    },
+    {
+      "id": "sg2",
+      "group": "suggestion",
+      "status": "ok",
+      "reason": null,
+      "warnings": [],
+      "latency_ms": 1633,
+      "attempts": 1,
+      "chars": 102,
+      "forbidden_hits": []
+    },
+    {
+      "id": "nm1",
+      "group": "numbers",
+      "status": "ok",
+      "reason": null,
+      "warnings": [],
+      "latency_ms": 775,
+      "attempts": 1,
+      "chars": 21,
+      "preservation_ok": true
+    }
+  ],
+  "summary": {
+    "total": 76,
+    "ok": 63,
+    "fallback": 13,
+    "skipped": 0,
+    "cancelled": 0,
+    "coverage": 0.8289,
+    "preservation": 1,
+    "p50": 1151,
+    "p90": 1598,
+    "max": 1749
+  },
+  "options": {
+    "limit": null
+  }
+}

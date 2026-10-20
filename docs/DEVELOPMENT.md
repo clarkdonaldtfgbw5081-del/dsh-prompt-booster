@@ -11,11 +11,14 @@
 npm ci
 git config core.hooksPath .githooks   # 一次性：启用发布前路径检查
 npm run check:publish
+npm run check:versions
 npm run typecheck
 npm test
 npm run evals
 npm run build
+npm run check:pack
 npm run smoke
+npm run smoke:tarball
 ```
 
 或一次运行全部检查：
@@ -24,7 +27,11 @@ npm run smoke
 npm run verify
 ```
 
-`npm run check:publish` 会扫描 git 可见文件，阻止 `.reference/`、`.local/`、备份、tarball、本机盘符路径和个人用户名进入提交。`pre-commit` 已配置为自动执行同一检查。
+浏览器集成测试独立运行：`npx playwright install chromium` 后执行 `npm run test:browser`。CI 的 browser 任务在 Ubuntu / Windows 执行；测试与人工验收边界见 [INTERACTION-ACCEPTANCE.md](./INTERACTION-ACCEPTANCE.md)。浏览器夹具使用独立 tsconfig.browser.json，避免 DSH 宿主与客户端声明合并。
+
+`npm run check:publish` 扫描 git 可见的工作区文件，检查本地目录、备份、盘符路径和常见密钥模式；嵌套 `.env` 文件也禁止进入提交，安全的 `.env.example` 可保留并接受扫描。`pre-commit` 使用 `node scripts/check-publish.mjs --staged` 检查实际暂存内容，避免未暂存的清理掩盖待提交密钥。扫描包括无扩展名文本，不读取 Git 历史，不能替代完整的密钥审计。
+
+`check:versions` 校验包版本与文档版本引用一致；`check:pack` 校验发布包只含白名单文件；`smoke:tarball` 解压 tarball 后验证宿主注册与浏览器入口。
 
 ## 本地演示
 
@@ -55,10 +62,13 @@ src/guards/             确定性约束检查
 src/client/             React 输入框入口、回填、取消、还原、样式与中英文文案
 src/client/copy.ts      客户端状态 / 按钮 / 错误文案的中英字典
 demo/                   Vite 之外的本地交互预览（esbuild + http server）
-evals/                  80 条构造样例、离线 / 在线指标
+evals/                  83 条构造样例、离线 / 在线指标
 tests/                  Node test runner + React Test Renderer
 scripts/build.mjs       宿主与客户端 bundle、声明文件
 scripts/smoke-package.mjs 构建产物集成冒烟
+scripts/smoke-tarball.mjs 打包产物（tarball）冒烟
+scripts/check-versions.mjs 包版本与文档版本引用一致性
+scripts/check-pack.mjs  发布包文件白名单与必需文件
 cordis.patch.yml        DSH bundle 安装层
 locale/                 中英文客户端文案
 ```

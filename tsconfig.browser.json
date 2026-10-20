@@ -1,0 +1,4 @@
+{
+  "extends": "./tsconfig.client.json",
+  "files": ["tests/browser/fixture.tsx", "tests/browser/composer.spec.ts", "playwright.config.ts"]
+}

@@ -1,6 +1,6 @@
 {
   "name": "dsh-prompt-booster",
-  "version": "0.2.3",
+  "version": "0.2.5",
   "description": "DeepSeek Harness 提示词优化插件：把一句草稿改写为结构化任务并直接回填输入框，不自动发送。",
   "type": "module",
   "license": "MIT",
@@ -68,15 +68,19 @@
     }
   },
   "scripts": {
-    "typecheck": "tsc -p tsconfig.host.json && tsc -p tsconfig.client.json && tsc -p tsconfig.checks.json && tsc -p tsconfig.client-checks.json",
+    "typecheck": "tsc -p tsconfig.host.json && tsc -p tsconfig.client.json && tsc -p tsconfig.checks.json && tsc -p tsconfig.client-checks.json && tsc -p tsconfig.browser.json",
     "build": "node scripts/build.mjs",
     "test": "tsx --test tests/*.test.ts tests/*.test.tsx",
+    "test:browser": "playwright test",
     "evals": "tsx evals/run.ts",
     "evals:live": "tsx evals/run.ts --live",
     "dev": "tsx demo/server.ts",
     "smoke": "node scripts/smoke-package.mjs",
+    "smoke:tarball": "node scripts/smoke-tarball.mjs",
     "check:publish": "node scripts/check-publish.mjs",
-    "verify": "npm run check:publish && npm run typecheck && npm run test && npm run evals && npm run build && npm run smoke",
+    "check:versions": "node scripts/check-versions.mjs",
+    "check:pack": "node scripts/check-pack.mjs",
+    "verify": "npm run check:publish && npm run check:versions && npm run typecheck && npm run test && npm run evals && npm run build && npm run check:pack && npm run smoke && npm run smoke:tarball",
     "pack:check": "npm pack --dry-run --ignore-scripts",
     "release:version": "node scripts/release.mjs",
     "release:notes": "node scripts/changelog-notes.mjs",
@@ -86,16 +90,15 @@
     "zod": "^4.1.12"
   },
   "peerDependencies": {
-    "@deepseek-ai/schemastery": "3.18.5",
     "@deepseek-ai/cordis": "4.0.5",
     "@deepseek-ai/dsh-agent-default-model": "0.2.1-rc.2",
     "@deepseek-ai/dsh-llm": "0.2.1-rc.2",
     "@deepseek-ai/dsh-session": "0.2.1-rc.2",
     "@deepseek-ai/dsh-typert-protocol": "0.2.1-rc.2",
-    "@deepseek-ai/dsh-typert-registry": "0.2.1-rc.2"
+    "@deepseek-ai/dsh-typert-registry": "0.2.1-rc.2",
+    "@deepseek-ai/schemastery": "3.18.5"
   },
   "devDependencies": {
-    "@deepseek-ai/schemastery": "3.18.5",
     "@deepseek-ai/cordis": "4.0.5",
     "@deepseek-ai/dsh-agent-default-model": "0.2.1-rc.2",
     "@deepseek-ai/dsh-api-gateway": "0.2.1-rc.2",
@@ -111,6 +114,8 @@
     "@deepseek-ai/dsh-session": "0.2.1-rc.2",
     "@deepseek-ai/dsh-typert-protocol": "0.2.1-rc.2",
     "@deepseek-ai/dsh-typert-registry": "0.2.1-rc.2",
+    "@deepseek-ai/schemastery": "3.18.5",
+    "@playwright/test": "1.62.1",
     "@types/node": "^24.10.0",
     "@types/react": "^18.3.0",
     "@types/react-dom": "^18.3.0",

@@ -16,7 +16,7 @@ export interface SolutionStrategy {
 
 // Signals are hints for selecting guidance, never authority to add features.
 export function positiveRequirements(raw: string): string {
-  return raw.replace(/(?:不要|不得|禁止|不能|不允许|不需要|无需|不做|不加|不用|不使用|不新增|do not|don't|must not|without|no\b|never)[^\n，。；;.!?]*/gi, '')
+  return raw.replace(/(?:不要|不得|禁止|不能|不允许|不需要|无需|不做|不添加|不加入|不加|不用|不使用|不新增|do not|don't|must not|without|no\b|never)[^\n，。；;.!?]*/gi, '')
 }
 
 export function solutionStrategy(request: BoostRequest): SolutionStrategy {

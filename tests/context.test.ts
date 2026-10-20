@@ -35,6 +35,35 @@ test('recent context is current-session user text, limited and only used for ref
     assert.equal((await collectContext(f.session, request('根据上面'), { ...policy, recentMessages: 'off' }, new AbortController().signal)).sources.length, 0)
   } finally { await f.close() }
 })
+test('English pronoun references must be explicit phrases, not a bare "this"', async () => {
+  const f = await fixture()
+  try {
+    f.append('Keep the existing API')
+    const policy = contextPolicySchema.parse({ recentLimit: 1 })
+    const noSources = async (raw: string) =>
+      (await collectContext(f.session, request(raw), policy, new AbortController().signal)).sources.length
+    // Ordinary English prose that merely contains these words must not pull history in.
+    for (const raw of [
+      'this is a login page',
+      'above the fold, show the pricing table',
+      'previous users should stay logged in',
+      'same look as the marketing site',
+      'Give me a detailed report on this issue',
+    ]) assert.equal(await noSources(raw), 0, raw)
+    // Explicit cross-message references still attach the most recent user turn.
+    for (const raw of [
+      'based on this project, add tests',
+      'as above, keep the same routes',
+      'the above requirements still hold',
+      'previous message: continue from there',
+      'this page needs a dark header',
+    ]) {
+      const result = await collectContext(f.session, request(raw), policy, new AbortController().signal)
+      assert.equal(result.sources.length, 1, raw)
+      assert.equal(result.sources[0].content, 'Keep the existing API')
+    }
+  } finally { await f.close() }
+})
 test('selected files stay inside the workspace; secrets, directories and binaries are skipped', async () => {
   const f = await fixture()
   try {

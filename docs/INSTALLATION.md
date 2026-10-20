@@ -15,7 +15,7 @@
 2. 使用管理该 DSH 安装的 CLI 安装：
 
    ```powershell
-   dsh plugin --profile web add ./dsh-prompt-booster-0.2.3.tgz
+   dsh plugin --profile web add ./dsh-prompt-booster-0.2.5.tgz
    ```
 
    桌面版请使用应用安装目录中附带的 CLI，不要混用其他全局安装的 `dsh`。
@@ -33,15 +33,15 @@ npm run typecheck
 npm test
 npm run build
 npm pack
-dsh plugin --profile web add ./dsh-prompt-booster-0.2.3.tgz
+dsh plugin --profile web add ./dsh-prompt-booster-0.2.5.tgz
 ```
 
-`npm pack` 会依次执行发布前路径检查、类型检查、124 项测试、离线评测、构建和产物冒烟检查；全部通过后才会生成 tarball。
+`npm pack` 会依次执行发布前路径与密钥检查、版本一致性检查、类型检查、188 项测试、离线评测、构建、打包内容检查、产物冒烟与 tarball 冒烟；全部通过后才会生成 tarball。独立的浏览器验收另运行 `npm run test:browser`。
 
 ## 升级
 
 ```powershell
-dsh plugin --profile web add ./dsh-prompt-booster-0.3.0.tgz
+dsh plugin --profile web add ./dsh-prompt-booster-0.2.5.tgz
 ```
 
 安装后完全退出并重启 DSH。插件配置保存在当前 DSH profile 中；升级默认保留已有配置。
@@ -92,4 +92,4 @@ dsh plugin --profile web remove dsh-prompt-booster
 
 ## 隐私与安全
 
-插件只在用户点击优化图标后，将当前草稿、用户明确允许的上下文片段和系统提示词发送给 DSH 当前配置的模型；默认不发送遥测、不创建独立日志、不持久化正文。详细边界见主 README 的“数据边界”与 [SECURITY.md](../SECURITY.md)。
+插件只在用户点击优化图标后，将当前草稿、用户明确允许的上下文片段和系统提示词发送给 DSH 当前配置的模型；不发送遥测，不创建独立日志或独立缓存。每次优化会向当前 DSH 会话写入 ignorable plugin record：request 记录含系统提示词与完整模型输入（草稿全文 + 允许的上下文），result 记录只含状态 / 失败码 / 耗时；该记录随会话日志持久化、fork/resume 携带、可随会话导出，但不进入模型可见面。详细边界见主 README 的“数据边界”与 [SECURITY.md](../SECURITY.md)。

@@ -47,6 +47,8 @@ test('one click directly replaces the draft without any dialog or preview editor
     assert.equal(view.focused(), 1); assert.equal(view.writes(), 1)
     assert.equal(view.renderer.root.findAllByType('textarea').length, 0)
     assert.equal(view.renderer.root.findAll(node => node.props.role === 'dialog').length, 0)
+    // The status line replaces its whole message, so screen readers must not rebuild a diff.
+    assert.equal(view.renderer.root.findAll(node => node.props.role === 'status')[0].props['aria-atomic'], 'true')
     act(() => view.button('还原原稿').props.onClick()); view.refresh()
     assert.equal(view.read().text, '写一份周报')
     assert.equal(view.focused(), 2); assert.equal(view.writes(), 2)
@@ -150,4 +152,67 @@ test('switching session aborts the old request and leaves the new draft untouche
     await view.complete()
     assert.equal(view.read().text, '新会话任务')
   } finally { act(() => view.renderer.unmount()) }
+})
+test('request ids fall back to a local id when crypto.randomUUID is unavailable', async () => {
+  const view = setup()
+  const crypto = globalThis.crypto
+  const descriptor = Object.getOwnPropertyDescriptor(crypto, 'randomUUID')
+  try {
+    Object.defineProperty(crypto, 'randomUUID', { configurable: true, value: () => { throw new Error('uuid unavailable') } })
+    view.start()
+    const request = view.pending[0].request
+    assert.match(request.request_id, /^pb-[a-z0-9]+-[a-z0-9]+$/)
+    assert.ok(request.request_id.length < 100)
+    await view.complete()
+    assert.equal(view.read().text, '请写一份周报，按重点组织内容。')
+  } finally {
+    if (descriptor) Object.defineProperty(crypto, 'randomUUID', descriptor)
+    else Reflect.deleteProperty(crypto, 'randomUUID')
+    act(() => view.renderer.unmount())
+  }
+})
+test('fallback notices use the specific reason instead of claiming nothing needed replacing', async () => {
+  const view = setup()
+  const statusText = () => view.renderer.root.findAll(node => node.props.role === 'status')[0].children.join('')
+  try {
+    view.start(); await view.complete({ status: 'fallback', reason_code: 'timeout' })
+    assert.equal(statusText(), '优化超时，原稿已保留，请重试。')
+    view.start(); await view.complete({ status: 'fallback', reason_code: 'future_reason' })
+    assert.equal(statusText(), '本次优化未完成，原稿已保留。')
+    assert.doesNotMatch(statusText(), /本次无需替换/)
+    // Only a skipped result without a reason code maps to "nothing to replace".
+    view.start(); await view.complete({ status: 'skipped', reason_code: null })
+    assert.equal(statusText(), '本次无需替换，原稿已保留。')
+  } finally { act(() => view.renderer.unmount()) }
+})
+test('an undo write failure is reported instead of escaping the toolbar', async () => {
+  let draft: DraftSnapshot = { text: '写一份周报', revision: 0, locked: false, hasReferences: false }
+  let pending!: { request: BoostRequest; resolve(value: BoostResult): void }
+  let replaceCalls = 0, renderer!: ReactTestRenderer
+  const props = (): BoosterProps => ({
+    draft, readDraft: () => draft,
+    replaceDraft(revision, text) {
+      if (replaceCalls++ > 0) throw new Error('editor unavailable')
+      if (revision !== draft.revision) return false
+      draft = { ...draft, text, revision: revision + 1 }
+      return true
+    },
+    generate(request) { return new Promise(resolve => { pending = { request, resolve } }) },
+  })
+  const refresh = () => act(() => renderer.update(<Booster {...props()} />))
+  const button = (label: string) => renderer.root.findAllByType('button').find(node => node.props['aria-label'] === label)!
+  act(() => { renderer = create(<Booster {...props()} />) })
+  try {
+    act(() => { button('优化提示词').props.onClick() })
+    await act(async () => {
+      pending.resolve({ ...baseResult(pending.request, 'fixture'), status: 'ok', optimized: '请写一份周报。' })
+      await Promise.resolve()
+    })
+    refresh()
+    assert.equal(draft.text, '请写一份周报。')
+    act(() => { button('还原原稿').props.onClick() })
+    refresh()
+    assert.equal(draft.text, '请写一份周报。')
+    assert.equal(renderer.root.findAll(node => node.props.role === 'status')[0].children.join(''), '草稿已被编辑或发送，无法直接还原。')
+  } finally { act(() => renderer.unmount()) }
 })

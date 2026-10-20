@@ -10,7 +10,7 @@ DeepSeek Harness（DSH）提示词优化插件：点一下输入框工具行的 
 [![CI](https://github.com/clarkdonaldtfgbw5081-del/dsh-prompt-booster/actions/workflows/ci.yml/badge.svg)](https://github.com/clarkdonaldtfgbw5081-del/dsh-prompt-booster/actions/workflows/ci.yml)
 [![DSH](https://img.shields.io/badge/DSH-0.2.1--rc.2-4a6b5c.svg)](https://github.com/clarkdonaldtfgbw5081-del/dsh-prompt-booster/blob/main/docs/COMPATIBILITY.md)
 [![Node](https://img.shields.io/badge/node-%3E%3D22.19-3c873a.svg)](https://github.com/clarkdonaldtfgbw5081-del/dsh-prompt-booster/blob/main/package.json)
-![version](https://img.shields.io/badge/version-0.2.3-5b7f6a.svg)
+![version](https://img.shields.io/badge/version-0.2.5-5b7f6a.svg)
 
 <img src="https://raw.githubusercontent.com/clarkdonaldtfgbw5081-del/dsh-prompt-booster/main/docs/assets/icon.png" width="72" align="right" alt="DSH Prompt Booster 图标" />
 
@@ -36,9 +36,11 @@ DeepSeek Harness（DSH）提示词优化插件：点一下输入框工具行的 
 - **按需展开的提示词**：写作任务不注入页面默认项，软件任务才带方案边界；受保护片段和资料也只在存在时进入模型请求。
 - **按需上下文**：只在草稿含有“这个 / 上面 / 根据”等指代时读取当前会话最近至多 3 条用户消息；文件只读取设置中明确列出的工作区文本，跳过常见凭据、二进制、目录与越界路径。
 - **原生设置**：超时、输出预算、模型路由、上下文、详细度 / 语气 / 默认方案、修复策略都可以在 DSH 设置页或 profile patch 中管理。
-- **可审计但不遥测**：辅助请求以 ignorable plugin record 写入当前 DSH 会话日志；事件摘要只保存在有界内存中，不单独落盘、不发送遥测。
+- **可审计但不遥测**：每次优化都会向当前 DSH 会话写入 ignorable plugin record——request 记录含系统提示词与完整模型输入（草稿全文 + 允许的上下文），result 记录只含状态 / 失败码 / 耗时；记录随会话日志持久化、fork/resume 携带、可随会话导出，但不进入模型可见面。事件摘要只保存在有界内存中，不另建日志、不发送遥测。
 - **中英状态文案**：按钮、优化中状态和失败提示跟随草稿语言切换；英文 locale 元信息已提供。
 - **安全失败**：连接错误、超时、空响应、截断、格式错误和守卫失败会保留原稿并给出简短状态，不自动重试。
+- **具体拦截原因**：区分遗漏限制、数字、任务部分、改变阶段或无依据新增等；悬停可见多项原因，未知警告正文不会显示。
+- **组词保护**：组合输入期间暂缓优化回填和还原；用户完成组词后可再次优化，不注册或改变宿主发送快捷键。
 
 ## 改写示意
 
@@ -51,14 +53,12 @@ DeepSeek Harness（DSH）提示词优化插件：点一下输入框工具行的 
 回填到输入框的内容大致会包含（示意，实际措辞由模型决定）：
 
 ```text
-任务：为现有项目设计登录页方案，本轮先不改代码。
-背景：沿用项目已有技术栈与目录约定；现有实现优先。
-交付：方案包含页面结构、所需组件、数据与接口边界、验证方法。
-约束：先给方案，等待确认；不新增依赖；不改动现有接口与数据结构。
-验收：方案可落地，且明确说明本轮不实施代码改动。
+为这个项目设计登录页，先给方案，不要改代码。
+结合已提供的项目资料说明页面结构、改动范围、实现思路与验证方法；
+已有技术约定优先。本轮只交付方案，不实施代码改动。
 ```
 
-改写不会增加原文没有的实体或业务范围；模型如果丢掉了“不要改代码”等约束，本地守卫会回退到原稿。
+本地守卫会保守检查数字、路径、代码、标识符、否定约束和常见扩围词是否被改写丢失或扩大；它不能完全证明中文业务名词与语义等价，改写后请仍然看一眼输入框再发送。模型如果丢掉了“不要改代码”等约束，守卫会回退到原稿。
 
 ## 快速开始
 
@@ -66,11 +66,11 @@ DeepSeek Harness（DSH）提示词优化插件：点一下输入框工具行的 
 
 要求 DSH `0.2.1-rc.2`，并已配置可用模型。
 
-1. 从本仓库 Releases 下载 `dsh-prompt-booster-0.2.3.tgz`。
+1. 从本仓库 Releases 下载 `dsh-prompt-booster-0.2.5.tgz`。
 2. 用管理该 DSH 安装的 CLI 安装：
 
    ```powershell
-   dsh plugin --profile web add ./dsh-prompt-booster-0.2.3.tgz
+   dsh plugin --profile web add ./dsh-prompt-booster-0.2.5.tgz
    ```
 
    桌面版请使用应用安装目录自带的 CLI，不要混用其他全局安装的 `dsh`。
@@ -97,7 +97,7 @@ npm run dev
 ```powershell
 npm run verify
 npm pack
-dsh plugin --profile web add ./dsh-prompt-booster-0.2.3.tgz
+dsh plugin --profile web add ./dsh-prompt-booster-0.2.5.tgz
 ```
 
 ## 使用
@@ -151,7 +151,7 @@ dsh plugin --profile web add ./dsh-prompt-booster-0.2.3.tgz
 - 默认发送：系统提示词、当前草稿、用户明确允许的上下文片段。
 - 指代型草稿可能附带当前会话最近至多 3 条用户消息；可在设置中关闭。
 - 选中的文件必须位于当前会话工作区，单文件不超过 48 KB，最多截取 6000 字符；常见凭据模式、`.env`、二进制、目录与越界路径会被跳过。识别规则不能保证发现所有敏感信息。
-- 不发送遥测，不创建独立日志或持久化缓存；辅助请求和结果代码会作为 DSH 会话审计记录保存，由 DSH 自己管理存储和清理。
+- 不发送遥测，不创建独立日志或独立缓存。每次优化会向当前 DSH 会话写入 ignorable plugin record：request 记录含系统提示词与完整模型输入（草稿全文 + 用户允许的上下文），result 记录只含状态 / 失败码 / 警告 / 耗时 / 尝试次数；该记录随会话日志持久化、fork/resume 携带、可随会话导出，但不进入模型可见面。存储与清理由 DSH 管理，卸载插件不会删除已有记录。
 - 完整说明和守卫策略见 [SECURITY.md](https://github.com/clarkdonaldtfgbw5081-del/dsh-prompt-booster/blob/main/SECURITY.md) 与下文“限制”。
 
 ## 兼容性
@@ -169,12 +169,16 @@ DSH 版本按精确版本固定。其他版本可能可以加载，但本仓库�
 
 ```powershell
 npm ci
-npm run typecheck   # 宿主、客户端、检查配置四套 TS 检查
-npm test            # 124 项自动化测试
-npm run evals       # 80 条人工构造离线样例
+npm run typecheck   # 宿主、客户端、检查配置与浏览器夹具 TS 检查
+npm test            # 188 项自动化测试
+npm run evals       # 83 条人工构造离线样例
 npm run build       # 宿主、客户端 bundle、声明文件与本地 demo
+npm run check:pack  # 发布包必需文件与 files 白名单
 npm run smoke       # 对构建产物执行原生 Cordis / 客户端注入冒烟
-npm run verify      # 以上全部
+npm run smoke:tarball # 解压 tarball 后的宿主注册与浏览器入口冒烟
+npm run verify      # 以上全部（含 check:publish 与 check:versions）
+npx playwright install chromium  # 首次浏览器验收时安装
+npm run test:browser # 独立的 Chromium 交互验收；不连接模型
 ```
 
 结构说明：
@@ -192,18 +196,20 @@ scripts/build.mjs       构建脚本
 cordis.patch.yml        DSH bundle 安装层
 ```
 
-`npm run evals:live` 会调用真实模型，需要配置 `BOOST_API_KEY`；详见 [evals/README.md](https://github.com/clarkdonaldtfgbw5081-del/dsh-prompt-booster/blob/main/evals/README.md)。自动化测试与离线样例只能证明已覆盖的行为，不能证明任意自然语言输入的语义等价或下游任务质量。
+`npm run evals:live` 会调用真实模型，默认使用 DeepSeek 兼容端点（`https://api.deepseek.com`，`deepseek-chat`，可用 `BOOST_BASE_URL` / `BOOST_MODEL` 覆盖），需要配置 `BOOST_API_KEY`；详见 [evals/README.md](https://github.com/clarkdonaldtfgbw5081-del/dsh-prompt-booster/blob/main/evals/README.md)。0.2.4 已用 `deepseek-chat` 跑完 76 条非跳过样例（75 ok；唯一回退是注入防御命中），工件与限制见 [evals/results/README.md](https://github.com/clarkdonaldtfgbw5081-del/dsh-prompt-booster/blob/main/evals/results/README.md)。自动化测试与离线样例只能证明已覆盖的行为，不能证明任意自然语言输入的语义等价或下游任务质量。
 
 提示词分层、上下文裁剪、默认项注入和真实模型评测流程见 [docs/PROMPT-ENGINEERING.md](https://github.com/clarkdonaldtfgbw5081-del/dsh-prompt-booster/blob/main/docs/PROMPT-ENGINEERING.md)。
+
+0.2.5 另含 12 组同义改写 / 多任务质量对照（24 项正反断言），覆盖有限措辞变化和显式多任务遗漏；这些是人工构造的代表场景，不是真实用户黄金集。本地 7 项浏览器集成验收通过，范围与完整 DSH 人工待验项见 [docs/INTERACTION-ACCEPTANCE.md](https://github.com/clarkdonaldtfgbw5081-del/dsh-prompt-booster/blob/main/docs/INTERACTION-ACCEPTANCE.md)。本轮未重跑真实模型，历史评测不代表本轮新增规则的真实质量证明。
 
 ## 限制
 
 - 当前是 **MVP / 早期版本**：固定 DSH 版本，完整 Web 与桌面交互、IME、原生快捷键和更广泛的真实用户质量仍需验收。
 - 本地规则是保守检查，不是语义证明；改写后请仍然看一眼输入框再发送。
 - 含结构化引用的草稿暂时禁用优化；普通附件保留在宿主输入框，不自动参与优化。
-- 真实模型评测样本很小（约 5 条桌面冒烟），不构成生产质量或 P90 延迟承诺。
+- 真实模型样本仍然有限：0.2.1 桌面冒烟 5 条（另有 0.2.0 3 条与 2 条复查）；0.2.4 用 DeepSeek API `deepseek-chat` 跑 76 条非跳过样例（75 ok，1 条为注入防御命中；约束保留 29/29；P50 1141 ms / P90 1550 ms）。0.2.2 / 0.2.3 无真实模型样本，且这些数字不构成生产质量或 P90 承诺。
 - 界面状态与错误提示会随草稿语言切换；DSH 设置页字段说明和部分宿主侧文案目前仍以中文为主。
-- 项目只支持浅色 / 深色由 DSH 主题决定，不单独维护主题。
+- 主题跟随 DSH 解析后的深浅主题（`data-ds-dark-theme`），并保留系统配色回退；第三方主题未验收。
 
 后续计划见 [docs/ROADMAP.md](https://github.com/clarkdonaldtfgbw5081-del/dsh-prompt-booster/blob/main/docs/ROADMAP.md)。
 

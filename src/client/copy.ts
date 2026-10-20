@@ -4,6 +4,7 @@ export type Notice =
   | { key: 'cancelled' }
   | { key: 'references' }
   | { key: 'locked' }
+  | { key: 'composing' }
   | { key: 'tooLong' }
   | { key: 'changed' }
   | { key: 'applied'; count?: number }
@@ -11,7 +12,7 @@ export type Notice =
   | { key: 'restored' }
   | { key: 'undoBlocked' }
   | { key: 'noResult' }
-  | { key: 'reason'; code?: string }
+  | { key: 'reason'; code?: string; warnings?: readonly string[] }
 
 export interface ClientCopy {
   locale: ClientLocale
@@ -27,10 +28,13 @@ export interface ClientCopy {
     statusBusyTitle: string
   }
   reasons: Record<string, string>
+  guards: Record<string, string>
+  guardKept: string
   notices: {
     cancelled: string
     references: string
     locked: string
+    composing: string
     tooLong: string
     changed: string
     applied: string
@@ -39,11 +43,25 @@ export interface ClientCopy {
     restored: string
     undoBlocked: string
     noResult: string
+    unknownReason: string
   }
 }
 
 const zh: ClientCopy = {
   locale: 'zh',
+  guardKept: '原稿已保留。',
+  guards: {
+    lost_constraint: '改写遗漏了原稿限制', lost_preference: '改写遗漏了风格或受众要求',
+    lost_number: '改写遗漏了原有数字', lost_identifier: '改写遗漏了技术名称、路径或标识符',
+    changed_stage: '改写改变了交付阶段', changed_intent: '改写改变了任务动作',
+    replaced_task: '改写偏离了原任务', lost_task_part: '改写遗漏了部分任务',
+    expanded_scope: '改写加入了未要求的功能', new_number: '改写加入了无依据的数字',
+    new_identifier: '改写加入了无依据的技术或标识符', too_long: '改写超过长度限制',
+    unverifiable_source: '补充内容无法核对来源', unapproved_default: '改写采用了未允许的默认方案',
+    fact_not_in_body: '补充记录与正文不一致', empty_output: '改写正文为空',
+    pending_suggestion_in_body: '改写加入了未采纳的建议', unapproved_suggestion: '建议未经采纳',
+    duplicate_addition: '补充记录重复', unknown_suggestion: '建议记录无效',
+  },
   labels: {
     optimize: '优化提示词',
     cancel: '取消优化',
@@ -76,6 +94,7 @@ const zh: ClientCopy = {
     cancelled: '已取消，原稿已保留。',
     references: '含结构化引用，暂不自动改写。',
     locked: '当前输入框不可编辑。',
+    composing: '输入法正在输入，原稿已保留；确认文字后可再优化。',
     tooLong: '草稿最多 20000 字符，原稿已保留。',
     changed: '草稿已变化，未覆盖；可再次优化。',
     applied: '已优化',
@@ -84,11 +103,25 @@ const zh: ClientCopy = {
     restored: '已还原原稿',
     undoBlocked: '草稿已被编辑或发送，无法直接还原。',
     noResult: '本次无需替换，原稿已保留。',
+    unknownReason: '本次优化未完成，原稿已保留。',
   },
 }
 
 const en: ClientCopy = {
   locale: 'en',
+  guardKept: 'Your draft was kept.',
+  guards: {
+    lost_constraint: 'The rewrite omitted a constraint', lost_preference: 'The rewrite omitted a style or audience requirement',
+    lost_number: 'The rewrite omitted an original number', lost_identifier: 'The rewrite omitted a technology, path or identifier',
+    changed_stage: 'The rewrite changed the delivery stage', changed_intent: 'The rewrite changed the requested action',
+    replaced_task: 'The rewrite drifted from the task', lost_task_part: 'The rewrite omitted part of the task',
+    expanded_scope: 'The rewrite added an unrequested feature', new_number: 'The rewrite added an unsupported number',
+    new_identifier: 'The rewrite added an unsupported technology or identifier', too_long: 'The rewrite exceeded the length limit',
+    unverifiable_source: 'An addition could not be verified against its source', unapproved_default: 'The rewrite used an unapproved default',
+    fact_not_in_body: 'Addition records did not match the text', empty_output: 'The rewrite was empty',
+    pending_suggestion_in_body: 'The rewrite included an unaccepted suggestion', unapproved_suggestion: 'A suggestion was not accepted',
+    duplicate_addition: 'Addition records were duplicated', unknown_suggestion: 'A suggestion record was invalid',
+  },
   labels: {
     optimize: 'Optimize prompt',
     cancel: 'Cancel optimization',
@@ -121,6 +154,7 @@ const en: ClientCopy = {
     cancelled: 'Optimization cancelled. Your draft was kept.',
     references: 'Structured references are not rewritten automatically yet.',
     locked: 'The composer is not editable right now.',
+    composing: 'Text composition is active. Your draft was kept. Finish composing before optimizing.',
     tooLong: 'The draft is limited to 20,000 characters. Your draft was kept.',
     changed: 'The draft changed, so the result was not applied. You can optimize again.',
     applied: 'Optimized',
@@ -129,6 +163,7 @@ const en: ClientCopy = {
     restored: 'Original draft restored',
     undoBlocked: 'The draft was edited or sent, so it cannot be restored directly.',
     noResult: 'Nothing needed to be replaced. Your draft was kept.',
+    unknownReason: 'Optimization did not complete. Your draft was kept.',
   },
 }
 
@@ -147,12 +182,32 @@ export function formatNotice(copy: ClientCopy, notice: Notice): string {
     case 'cancelled': return copy.notices.cancelled
     case 'references': return copy.notices.references
     case 'locked': return copy.notices.locked
+    case 'composing': return copy.notices.composing
     case 'tooLong': return copy.notices.tooLong
     case 'changed': return copy.notices.changed
     case 'failed': return copy.notices.failed
     case 'restored': return copy.notices.restored
     case 'undoBlocked': return copy.notices.undoBlocked
     case 'noResult': return copy.notices.noResult
-    case 'reason': return (notice.code && copy.reasons[notice.code]) || copy.notices.noResult
+    case 'reason':
+      if (notice.code === 'guard_failed') {
+        const detail = guardDetails(copy, notice)[0]
+        if (detail) return copy.locale === 'zh' ? `${detail}，${copy.guardKept}` : `${detail}. ${copy.guardKept}`
+      }
+      // No code means the host skipped optimization (nothing to replace). An unknown
+      // code means the rewrite did not complete: never claim nothing needed changing.
+      if (!notice.code) return copy.notices.noResult
+      return Object.hasOwn(copy.reasons, notice.code) ? copy.reasons[notice.code] : copy.notices.unknownReason
   }
+}
+
+/** Only static, allowlisted labels reach the UI; unknown codes never echo model data. */
+function guardDetails(copy: ClientCopy, notice: Notice): string[] {
+  if (notice.key !== 'reason' || notice.code !== 'guard_failed') return []
+  return [...new Set(notice.warnings ?? [])].filter(code => Object.hasOwn(copy.guards, code)).slice(0, 4).map(code => copy.guards[code])
+}
+
+export function noticeTitle(copy: ClientCopy, notice: Notice): string {
+  const details = guardDetails(copy, notice)
+  return details.length ? `${details.join(copy.locale === 'zh' ? '；' : '; ')}${copy.locale === 'zh' ? '。' : '.'} ${copy.guardKept}` : formatNotice(copy, notice)
 }

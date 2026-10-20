@@ -16,8 +16,14 @@ export class DraftHistory {
     const now = port.read()
     if (now.locked || now.hasReferences || snapshot.hasReferences || now.revision !== snapshot.revision || now.text !== snapshot.text) return false
     if (!port.replace(snapshot.revision, text)) return false
-    const after = port.read()
-    this.saved = { original: snapshot.text, applied: text, revision: after.revision }
+    // Editors may silently sanitize the text we wrote (trim, whitespace, chips), so read
+    // back what actually landed; undo must be checked against the composer, not the request.
+    let applied = text, revision = snapshot.revision
+    try {
+      const after = port.read()
+      applied = after.text; revision = after.revision
+    } catch { /* A failed read-back only disables undo; the write already happened. */ }
+    this.saved = { original: snapshot.text, applied, revision }
     return true
   }
   canUndo(now: DraftSnapshot): boolean {
@@ -25,7 +31,10 @@ export class DraftHistory {
   }
   undo(port: DraftPort): boolean {
     const saved = this.saved
-    if (!saved || !this.canUndo(port.read()) || !port.replace(saved.revision, saved.original)) return false
+    if (!saved) return false
+    try {
+      if (!this.canUndo(port.read()) || !port.replace(saved.revision, saved.original)) return false
+    } catch { return false }
     this.saved = undefined
     return true
   }

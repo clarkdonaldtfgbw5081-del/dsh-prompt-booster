@@ -4,13 +4,18 @@
  *   任一断言失败即退出码 1（DESIGN.md 8.1：关键约束变更必须修复后才能发布）。
  * - --live：调用 BOOST_API_KEY 指向的真实模型，统计状态分布、约束保留率、无依据新增、
  *   长度与延迟分位数；出现约束丢失或无依据新增同样判定失败。用法见 evals/README.md。
+ * - --live --out <path>：把同一轮观测写成带 schema/model/created_at/git_commit 的 JSON 工件；
+ *   工件不包含草稿正文、BOOST_API_KEY 或提供方错误正文。
  */
+import { mkdir, writeFile } from 'node:fs/promises'
+import { dirname, resolve } from 'node:path'
 import { BoostEngine } from '../src/core/engine.ts'
 import { classify, skipReason } from '../src/core/route.ts'
 import { requestSchema, type Candidate, type ModelProvider } from '../src/types.ts'
 import { compatibleProvider } from '../demo/provider.ts'
 import { GOLDEN_CASES, type GoldenCase } from './cases.ts'
-import { liveIssues, percentile, readOptions } from './metrics.ts'
+import { QUALITY_CASES } from './quality-cases.ts'
+import { buildLiveReport, liveCoverageFailure, liveIssues, readOptions, type LiveObservation } from './metrics.ts'
 
 interface Failure { id: string; group: string; detail: string }
 
@@ -72,7 +77,16 @@ async function runOffline(): Promise<void> {
     const failure = await checkScripted(caze)
     if (failure) failures.push(failure)
   }
+  for (const item of QUALITY_CASES) {
+    for (const [optimized, expect] of [[item.valid, 'ok'], [item.invalid, 'fallback']] as const) {
+      const failure = await checkScripted({ id: 'quality-' + item.id + '-' + expect, group: 'writing', raw: item.raw,
+        scripted: { candidate: { optimized, task_type: 'other', additions: [], unresolved: [], slots: { goal: '', context: '', inputs: '', output_format: '', constraints: [], acceptance: [] } },
+          expect, ...(expect === 'fallback' ? { expect_warnings: ['warning' in item ? item.warning : 'replaced_task'] } : {}) } })
+      if (failure) failures.push(failure)
+    }
+  }
   const groups = [...new Set(GOLDEN_CASES.map(caze => caze.group))]
+  console.log(`代表性质量对照：${QUALITY_CASES.length} 组，${QUALITY_CASES.length * 2} 项同义改写 / 多任务遗漏断言（人工构造，不是真实用户黄金集）。`)
   console.log(`离线人工构造回归集：${GOLDEN_CASES.length} 条样例（${groups.length} 个类别），`
     + `${routeChecks} 项路由断言 + ${scripted.length} 项守卫回归。`)
   for (const group of groups) {
@@ -89,7 +103,7 @@ async function runOffline(): Promise<void> {
   }
 }
 
-async function runLive(limit: number | undefined): Promise<void> {
+async function runLive(limit: number | undefined, out: string | undefined): Promise<void> {
   if (!process.env.BOOST_API_KEY) {
     console.error('--live 需要 BOOST_API_KEY（以及可选 BOOST_BASE_URL / BOOST_MODEL），见 evals/README.md。')
     process.exit(1)
@@ -97,37 +111,36 @@ async function runLive(limit: number | undefined): Promise<void> {
   const provider = compatibleProvider()
   const cases = GOLDEN_CASES.filter(caze => !caze.route?.skip).slice(0, limit)
   const failures: Failure[] = []
-  const latencies: number[] = []
+  const observations: LiveObservation[] = []
   const statusTally: Record<string, number> = {}
-  let preservationTotal = 0
-  let preservationKept = 0
-  let constraintAttempts = 0
-  let usable = 0
-  let issuesChecked = 0
+  const startedAt = new Date().toISOString()
   console.log(`真实模型评测：${cases.length} 条样例，模型 ${provider.name}。逐条执行…`)
   for (const caze of cases) {
     const engine = new BoostEngine(provider, { timeoutMs: 60000 })
     const result = await engine.boost(buildRequest(caze))
-    if (caze.must_preserve?.length) constraintAttempts++
+    observations.push({ caze, result })
     statusTally[result.status] = (statusTally[result.status] ?? 0) + 1
-    latencies.push(result.meta.latency_ms)
     console.log(`  [${caze.id}] ${result.status}${result.status === 'ok' ? '' : ` (${result.reason_code ?? 'guard_failed'}${result.warnings.length ? `: ${result.warnings.join(',')}` : ''})`}`)
     for (const detail of liveIssues(caze, result)) failures.push({ id: caze.id, group: caze.group, detail })
-    if (result.status !== 'ok') continue
-    usable++
-    if (caze.must_preserve?.length) {
-      preservationTotal++
-      const missing = caze.must_preserve.filter(part => !result.optimized.includes(part))
-      if (!missing.length) preservationKept++
-    }
-    if (caze.forbidden?.length) issuesChecked++
   }
+  const report = buildLiveReport({ model: provider.name, cases: observations, startedAt, options: { limit } })
+  const preservationRows = report.cases.filter(row => row.preservation_ok !== undefined)
+  const preservationKept = preservationRows.filter(row => row.preservation_ok).length
+  const constraintAttempts = observations.filter(({ caze }) => Boolean(caze.must_preserve?.length)).length
+  const issuesChecked = observations.filter(({ caze, result }) => result.status === 'ok' && Boolean(caze.forbidden?.length)).length
   console.log('\n状态分布：', JSON.stringify(statusTally))
-  console.log(`可用改写覆盖：${usable}/${cases.length}；无需改写：${statusTally.skipped ?? 0}；回退与取消计入失败。`)
-  console.log(`成功改写的约束保留率：${preservationTotal ? Math.round((preservationKept / preservationTotal) * 100) + '%' : 'n/a'}（${preservationKept}/${preservationTotal}）；含约束的全部尝试：${constraintAttempts}。`)
+  console.log(`可用改写覆盖：${report.summary.ok}/${report.summary.total}；无需改写：${report.summary.skipped}；回退与取消计入失败。`)
+  console.log(`成功改写的约束保留率：${preservationRows.length ? Math.round((preservationKept / preservationRows.length) * 100) + '%' : 'n/a'}（${preservationKept}/${preservationRows.length}）；含约束的全部尝试：${constraintAttempts}。`)
   console.log(`禁止项检查覆盖 ${issuesChecked} 条成功改写；这不等于完整语义质量评价。`)
-  console.log(`延迟：P50 ${percentile(latencies, 0.5) ?? 'n/a'} ms，P90 ${percentile(latencies, 0.9) ?? 'n/a'} ms，最大 ${Math.max(0, ...latencies)} ms`)
-  if (!usable) failures.push({ id: 'coverage', group: 'coverage', detail: '没有可用改写，无法评价优化质量' })
+  console.log(`延迟：P50 ${report.summary.p50 ?? 'n/a'} ms，P90 ${report.summary.p90 ?? 'n/a'} ms，最大 ${report.summary.max ?? 'n/a'} ms`)
+  if (out) {
+    const target = resolve(out)
+    await mkdir(dirname(target), { recursive: true })
+    await writeFile(target, `${JSON.stringify(report, null, 2)}\n`)
+    console.log(`评测工件已写入 ${out}（schema 1；不含凭据与提供方错误正文）。`)
+  }
+  const coverageFailure = liveCoverageFailure(report)
+  if (coverageFailure) failures.push({ id: 'coverage', group: 'coverage', detail: coverageFailure })
   if (failures.length) {
     console.error(`\n失败 ${failures.length} 项：`)
     for (const failure of failures) console.error(`  [${failure.id}] ${failure.group}: ${failure.detail}`)
@@ -139,7 +152,7 @@ async function runLive(limit: number | undefined): Promise<void> {
 
 try {
   const options = readOptions(process.argv.slice(2))
-  if (options.live) await runLive(options.limit)
+  if (options.live) await runLive(options.limit, options.out)
   else await runOffline()
 } catch (error) {
   console.error(error instanceof Error ? error.message : '评测未能完成')

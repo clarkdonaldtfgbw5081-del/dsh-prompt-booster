@@ -1,5 +1,9 @@
 # 桌面模型验证记录
 
+## 0.2.4：DeepSeek API live（不属于桌面账户适配器路径）
+
+`npm run evals:live -- --out …` 使用 DeepSeek API（`BOOST_BASE_URL=https://api.deepseek.com`，`BOOST_MODEL=deepseek-chat`）跑 76 条非跳过样例：75 ok，唯一 fallback 是 `inj3` 注入防御命中；约束保留 29/29；P50 1141 ms / P90 1550 ms / max 1978 ms。工件与来源说明见 `results/README.md` 和 `docs/COMPATIBILITY.md`。该路径直接调用模型 API，不经过安装版 DSH 宿主，因此不能替代下面的桌面交互验收。
+
 ## 0.2.1：按任务选择方案
 
 同一原生账户适配器实测 5 条固定合成样例均成功，未使用用户项目文件或真实会话正文。

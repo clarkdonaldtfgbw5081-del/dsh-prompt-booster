@@ -12,7 +12,7 @@ import Gateway from '@deepseek-ai/dsh-api-gateway'
 import Access from '@deepseek-ai/dsh-api-remote-access'
 import PromptBooster from '../src/index.ts'
 import { remoteInfo } from '../src/adapters/wire.ts'
-import { requestSchema } from '../src/types.ts'
+import { requestSchema, type BoostResult } from '../src/types.ts'
 import { sessionRoute } from '../src/adapters/route.ts'
 
 declare module '@deepseek-ai/dsh-typert-protocol' {
@@ -22,6 +22,8 @@ declare module '@deepseek-ai/dsh-typert-protocol' {
 class FixtureAdapter extends LlmAdapter {
   captured?: GenerateOptions
   finish: FinishReason = { kind: 'stop' }
+  streams = 0
+  failWith?: Error
   async resolveModel(provider: string, model: string) {
     return { provider, id: model, name: model, reasoning: {
       efforts: [{ id: ReasoningEffortId('low'), name: 'Low' }, { id: ReasoningEffortId('max'), name: 'Max' }],
@@ -29,7 +31,9 @@ class FixtureAdapter extends LlmAdapter {
     } }
   }
   async *stream(options: GenerateOptions): AsyncIterable<StreamChunk> {
+    this.streams++
     this.captured = options
+    if (this.failWith) throw this.failWith
     yield { type: 'text-delta', index: 0, text: JSON.stringify({
       optimized: '请实现一个登录页面。', task_type: 'code_gen',
       slots: { goal: '登录页面', context: '', inputs: '', output_format: '', constraints: [], acceptance: [] },
@@ -125,4 +129,108 @@ test('wire contract rejects undeclared input before dispatch', () => {
   const method = remoteInfo.methods['promptBooster/boost']
   assert.throws(() => method.input({ strict: true }).create().parse({ input: { session_id: 'x', request: {}, surprise: true } }))
   assert.equal(method.cancellation?.parameter, 'signal')
+})
+
+function ownerPeer(ctx: Context): PeerScope {
+  return { id: 'test-owner' as PeerId, ctx, principal: { kind: 'owner' }, signal: new AbortController().signal, interactions: 'none', dispose: async () => {} }
+}
+
+async function boostThroughGateway(ctx: Context, sessionId: string, request: ReturnType<typeof requestSchema.parse>): Promise<BoostResult[]> {
+  const results: BoostResult[] = []
+  const stream = await ctx.typertGateway.stream({
+    namespace: 'promptBooster', method: 'boost', args: { input: { session_id: sessionId, request } }, peer: ownerPeer(ctx),
+  })
+  for await (const result of stream) results.push(result as BoostResult)
+  return results
+}
+
+test('a boost for a session that is not open returns a safe session_not_open fallback', async () => {
+  const ctx = new Context()
+  ctx.plugin(TypertRegistry)
+  ctx.plugin(SessionStore)
+  ctx.plugin(LlmRuntime)
+  ctx.plugin(Access)
+  const gateway = ctx.plugin(Gateway, {})
+  ctx.plugin(DefaultModel, { provider: 'fixture', model: 'fixture-model' })
+  const plugin = ctx.plugin(PromptBooster, { timeoutMs: 1000 })
+  await plugin.await()
+  await gateway.await()
+  try {
+    const request = requestSchema.parse({ request_id: 'closed-session', draft_revision: 2, raw: '做一个登录页面' })
+    const results = await boostThroughGateway(ctx, 'session-that-is-not-open', request)
+    assert.equal(results.length, 1)
+    assert.equal(results[0].status, 'fallback')
+    assert.equal(results[0].reason_code, 'session_not_open')
+    assert.equal(results[0].optimized, request.raw)
+    assert.equal(results[0].draft_revision, request.draft_revision)
+    // The host guard returns before the engine starts: no click/completion events.
+    assert.deepEqual(ctx.promptBooster.recentEvents(), [])
+  } finally { await ctx.fiber.dispose() }
+})
+
+test('a provider transport failure falls back safely and never echoes the provider error', async () => {
+  const ctx = new Context()
+  ctx.plugin(TypertRegistry)
+  ctx.plugin(SessionStore)
+  ctx.plugin(LlmRuntime)
+  ctx.plugin(Access)
+  const gateway = ctx.plugin(Gateway, {})
+  ctx.plugin(DefaultModel, { provider: 'fixture', model: 'fixture-model' })
+  const plugin = ctx.plugin(PromptBooster, { timeoutMs: 1000 })
+  await plugin.await()
+  await gateway.await()
+  try {
+    const adapter = new FixtureAdapter()
+    ctx.llm.registerAdapter(['fixture'], adapter)
+    const session = ctx.sessions.create()
+    const secret = 'provider-secret-body sk-live-must-not-leak'
+    adapter.failWith = new Error(secret)
+    const request = requestSchema.parse({ request_id: 'provider-transport', draft_revision: 0, raw: '做一个登录页面' })
+    const results = await boostThroughGateway(ctx, session.id, request)
+    assert.equal(results.length, 1)
+    assert.equal(results[0].status, 'fallback')
+    assert.equal(results[0].reason_code, 'model_request_failed')
+    assert.equal(results[0].optimized, request.raw)
+    assert.deepEqual(results[0].warnings, [])
+    assert.equal(adapter.streams, 1, 'a transport failure must not trigger another model call')
+    const audit = session.snapshotEvents().map(pluginRecordOf)
+    const resultRecord = audit.find(record => record?.type === 'plugin:dsh-prompt-booster/result')
+    assert.ok(resultRecord)
+    assert.ok(JSON.stringify(resultRecord).includes('model_request_failed'))
+    assert.equal(session.snapshotEvents().filter(event => event.type === 'user/message').length, 0)
+    assert.deepEqual(ctx.promptBooster.recentEvents().map(event => [event.name, event.status]), [
+      ['boost_clicked', undefined], ['boost_completed', 'fallback'],
+    ])
+    const exposed = JSON.stringify({ results, audit, recent: ctx.promptBooster.recentEvents() })
+    assert.ok(!exposed.includes(secret), 'provider error text must not reach the client or the audit log')
+    assert.ok(!exposed.includes('sk-live-must-not-leak'))
+  } finally { await ctx.fiber.dispose() }
+})
+
+test('a default-model resolution failure returns model_unavailable without the error body', async () => {
+  const ctx = new Context()
+  const secret = 'default-model-secret'
+  ctx.provide('agentDefaultModel', {
+    currentSelection() { throw new Error(secret) },
+  } as unknown as InstanceType<typeof DefaultModel>)
+  ctx.plugin(TypertRegistry)
+  ctx.plugin(SessionStore)
+  ctx.plugin(LlmRuntime)
+  ctx.plugin(Access)
+  const gateway = ctx.plugin(Gateway, {})
+  const plugin = ctx.plugin(PromptBooster, { timeoutMs: 1000 })
+  await plugin.await()
+  await gateway.await()
+  try {
+    const session = ctx.sessions.create()
+    const request = requestSchema.parse({ request_id: 'model-unavailable', draft_revision: 0, raw: '做一个登录页面' })
+    const results = await boostThroughGateway(ctx, session.id, request)
+    assert.equal(results.length, 1)
+    assert.equal(results[0].status, 'fallback')
+    assert.equal(results[0].reason_code, 'model_unavailable')
+    assert.equal(results[0].optimized, request.raw)
+    assert.equal(session.snapshotEvents().filter(event => event.type === 'user/message').length, 0)
+    const exposed = JSON.stringify({ results, events: session.snapshotEvents().map(pluginRecordOf), recent: ctx.promptBooster.recentEvents() })
+    assert.ok(!exposed.includes(secret))
+  } finally { await ctx.fiber.dispose() }
 })

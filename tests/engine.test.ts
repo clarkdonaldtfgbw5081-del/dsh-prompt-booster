@@ -42,6 +42,31 @@ test('English prose can be rewritten without treating every new word as an entit
   assert.deepEqual(validateCandidate(request('build a login page'), candidate('Please create a clear login page.')), [])
   assert.ok(validateCandidate(request('build a login page'), candidate('Create a login page with React.')).includes('new_identifier'))
 })
+test('sentence-initial English verbs are prose, not invented entities', () => {
+  // DeepSeek live evaluation returned these as valid rewrites; capitalising the first
+  // word of a sentence must not classify Specify/Then/Diagnose/Cover as product names.
+  const api = request('implement an API endpoint for user preferences')
+  const body = 'Implement an API endpoint for user preferences. Specify the endpoint input and output, failure responses, and how to verify it locally. Then follow existing project conventions where available.'
+  assert.deepEqual(validateCandidate(api, candidate(body)), [])
+  assert.deepEqual(validateCandidate(request('build a login page'), candidate('Build a login page. Summarize what is needed.')), [])
+  assert.deepEqual(validateCandidate(request('build a login page'), candidate('Build a login page. Reuse the project stack. Base the diagnosis on evidence.')), [])
+})
+test('real entity names are still rejected in English prose', () => {
+  assert.ok(validateCandidate(request('build a login page'), candidate('Create a login page with JWT.')).includes('new_identifier'))
+  assert.ok(validateCandidate(request('build a login page'), candidate('Add Pinia state to the login page.')).includes('new_identifier'))
+  // Entity-shaped tokens are strong even at a sentence start.
+  assert.ok(validateCandidate(request('build a login page'), candidate('JWT tokens must be handled on the login page.')).includes('new_identifier'))
+  assert.ok(validateCandidate(request('build a login page'), candidate('OAuth redirects must be handled on the login page.')).includes('new_identifier'))
+})
+test('paraphrased sourced facts do not reject an otherwise usable rewrite', () => {
+  const input = request('实现登录页面')
+  input.context_sources = [{ id: 'f', label: '项目配置', content: '本项目使用 Vue 3 和 Pinia' }]
+  const value = candidate('实现登录页面。项目使用 Vue 3 和 Pinia。')
+  value.additions = [{ id: 'f1', kind: 'sourced_fact', value: '本项目使用 Vue 3 和 Pinia', evidence_quote: '本项目使用 Vue 3 和 Pinia', source_id: 'f', action: 'included' }]
+  // Host/client accept the bookkeeping drift, while direct validation stays strict.
+  assert.deepEqual(validateCandidate(input, value, [], { allowUnusedAdditions: true }), [])
+  assert.ok(validateCandidate(input, value).includes('fact_not_in_body'))
+})
 test('whole-file evidence cannot launder an unsupported claim', () => {
   const input = request(); input.context_sources = [{ id: 'f', label: '项目配置', content: 'React 18' }]
   const value = candidate('用 React 99 实现登录页面')

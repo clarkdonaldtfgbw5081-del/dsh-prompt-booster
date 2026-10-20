@@ -17,7 +17,8 @@ interface Injected {
   trackEvent(event: BoostEvent): void
 }
 type Props = PropsRuntime<'conversation.input.left'> & InjectFace<Injected>
-function ComposerBooster(props: Props) {
+/** Named export so the real slot wiring can be rendered directly by tests. */
+export function ComposerBooster(props: Props) {
   const input = props.useInput(state => state)
   return <Booster
     key={props.sessionId}
@@ -26,8 +27,20 @@ function ComposerBooster(props: Props) {
     replaceDraft={(revision, text) => {
       const now = props.readDraft()
       if (now.revision !== revision || now.hasReferences || now.locked) return false
-      const replaced = props.inputActions.insertText(text, { start: 0, end: now.text.length, draftRev: revision })
-      if (replaced) props.inputActions.persistDraft()
+      let replaced: boolean
+      try {
+        replaced = props.inputActions.insertText(text, { start: 0, end: now.text.length, draftRev: revision })
+      } catch {
+        // An editor write failure is a draft conflict, not an applied result.
+        return false
+      }
+      if (replaced) {
+        try {
+          props.inputActions.persistDraft()
+        } catch {
+          // The text is already in the editor; a persistence fault must not report a failed write.
+        }
+      }
       return replaced
     }}
     generate={props.generate}

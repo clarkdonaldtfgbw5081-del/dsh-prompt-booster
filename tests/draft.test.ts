@@ -33,6 +33,38 @@ test('reference chips and submission locks are preserved', () => {
     assert.equal(new DraftHistory().apply(draft, draft.read(), '新稿'), false)
   }
 })
+test('apply records the editor-sanitized text so a silent cleanup can still be undone', () => {
+  let draft: DraftSnapshot = { text: '原稿', revision: 0, locked: false, hasReferences: false }
+  const cleaning: DraftPort = {
+    read: () => draft,
+    replace(revision, text) {
+      if (draft.revision !== revision || draft.locked) return false
+      // The composer trims and collapses whitespace instead of storing the exact request.
+      draft = { ...draft, text: text.replace(/\s+/g, ' ').trim(), revision: revision + 1 }
+      return true
+    },
+  }
+  const history = new DraftHistory()
+  assert.equal(history.apply(cleaning, cleaning.read(), '  优化   稿  '), true)
+  assert.equal(cleaning.read().text, '优化 稿')
+  // Undo must be checked against what the editor actually stored, not the requested text.
+  assert.equal(history.canUndo(cleaning.read()), true)
+  assert.equal(history.undo(cleaning), true)
+  assert.equal(cleaning.read().text, '原稿')
+  assert.equal(history.undo(cleaning), false)
+})
+test('a throwing editor write propagates from apply so the UI reports failure', () => {
+  const history = new DraftHistory(), draft = port(), snapshot = draft.read()
+  const refusing: DraftPort = { read: draft.read, replace() { throw new Error('editor unavailable') } }
+  assert.throws(() => history.apply(refusing, snapshot, '优化稿'), /editor unavailable/)
+  assert.equal(draft.read().text, '原稿')
+})
+test('undo reports failure instead of escaping when the editor throws', () => {
+  const applying = port(), history = new DraftHistory()
+  assert.equal(history.apply(applying, applying.read(), '优化稿'), true)
+  assert.equal(history.undo({ read: applying.read, replace() { throw new Error('editor unavailable') } }), false)
+  assert.equal(applying.read().text, '优化稿')
+})
 test('diff reconstructs both versions with Unicode and long documents', () => {
   for (const [before, after] of [['原稿🙂', '新原稿🙂！'], ['', '新增'], ['删除', ''], ['甲'.repeat(1600), '乙'.repeat(1600)]]) {
     const parts = diffText(before, after)

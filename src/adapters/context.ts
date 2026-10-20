@@ -5,7 +5,7 @@ import type { BoostRequest, ContextSource } from '../types.ts'
 import type { ContextPolicy } from '../config.ts'
 
 const secret = /-----BEGIN [^-]*PRIVATE KEY-----|(?:api[_-]?key|password|secret|token|密码|密钥|令牌)["']?\s*[=:：]\s*["']?\S+|Bearer\s+[A-Za-z0-9._-]+|https?:\/\/[^\s/:]+:[^\s/@]+@/i
-const referenced = /这个|这些|上面|上述|刚才|之前|根据|照着|同样|此项目|当前项目|this|above|previous|same|based on/i
+const referenced = /这个|这些|上面|上述|刚才|之前|根据|照着|同样|此项目|当前项目|based on|as above|the above|previous (?:message|request|task|answer|reply)|this (?:project|page|app|site|file|code|task|repo)/i
 const extensions = new Set(['.md', '.txt', '.json', '.yaml', '.yml', '.arc', '.ts', '.tsx', '.js', '.jsx', '.css', '.html'])
 
 export async function collectContext(session: Session, request: BoostRequest, policy: ContextPolicy, signal: AbortSignal) {

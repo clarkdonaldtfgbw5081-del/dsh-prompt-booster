@@ -24,6 +24,7 @@ test('client mounts and injects the native remote namespace before boost and fee
     meta: { model: 'fixture', latency_ms: 1 },
   }
   let registration: { inject(sessionId: string): Face } | undefined
+  let slotComponent: unknown
   let removed = 0
   let focused = 0
   let ready!: () => void
@@ -46,8 +47,8 @@ test('client mounts and injects the native remote namespace before boost and fee
   class FixtureSlots extends Service {
     constructor(ctx: Context) { super(ctx, 'slots') }
     inject(_name: string, register: () => () => void) { return this.ctx.effect(register) }
-    register(options: typeof registration) {
-      registration = options; ready()
+    register(options: typeof registration, component: unknown) {
+      registration = options; slotComponent = component; ready()
       return () => { registration = undefined; removed++ }
     }
   }
@@ -62,6 +63,9 @@ test('client mounts and injects the native remote namespace before boost and fee
   try {
     await plugin
     await registered
+    // The registered slot component must be the renderable named export, not a wrapper.
+    assert.equal(slotComponent, Client.ComposerBooster)
+    assert.equal(typeof Client.ComposerBooster, 'function')
     const face = registration!.inject('session-fixture')
     assert.equal(face.readDraft().revision, 1)
     face.focusDraft(); assert.equal(focused, 1)

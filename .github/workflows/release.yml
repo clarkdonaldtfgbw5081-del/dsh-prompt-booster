@@ -11,6 +11,7 @@ permissions:
 jobs:
   publish:
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -22,6 +23,12 @@ jobs:
         run: |
           node --input-type=module -e "import fs from 'node:fs'; const p = JSON.parse(fs.readFileSync('package.json', 'utf8')); if ('v' + p.version !== process.env.GITHUB_REF_NAME) { console.error('tag ' + process.env.GITHUB_REF_NAME + ' does not match package.json ' + p.version); process.exit(1) }"
       - run: npm run verify
+      - name: Install browser for interaction acceptance
+        run: npx playwright install --with-deps chromium
+      - name: Verify browser interactions
+        run: npm run test:browser
+      - name: Check package contents
+        run: npm run check:pack
       - run: npm pack --ignore-scripts
       - name: Extract release notes
         run: node scripts/changelog-notes.mjs "${GITHUB_REF_NAME}" > release-notes.md

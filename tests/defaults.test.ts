@@ -85,3 +85,18 @@ test('automatic completion stays inside the strict output contract', async () =>
   const result = await new BoostEngine({ name: 'fixture', async generate() { return JSON.stringify(value) } }).boost(request())
   assert.equal(result.status, 'fallback'); assert.ok(resultSchema.safeParse(result).success)
 })
+test('paraphrased default bookkeeping does not reject an otherwise usable rewrite', async () => {
+  const input = requestSchema.parse({ request_id: 'unused-default', draft_revision: 0, raw: 'build a login page', language: 'en' })
+  const body = "Build a login page. Use the project's existing stack; if this is a standalone page, use HTML/CSS/JavaScript without adding dependencies. Include a login form, input guidance, and submission feedback. Deliver the page source and local run instructions. Keep the result focused on the current request and do not add extra business features or change frameworks."
+  const canonical = 'Default stack: reuse the project stack; for a standalone page use HTML/CSS/JavaScript without new dependencies.'
+  const value: Candidate = { ...candidate(body), task_type: 'code_gen', additions: [
+    { id: 'd1', kind: 'default_assumption', category: 'tech_stack', value: canonical, action: 'included' },
+  ] }
+  const result = await new BoostEngine({ name: 'fixture', async generate() { return JSON.stringify(value) } }).boost(input)
+  assert.equal(result.status, 'ok')
+  // The canonical sentence did not fit the remaining budget, but its identifiers stay
+  // authorized and the rewrite is still applied rather than falling back.
+  assert.ok(!result.optimized.includes(canonical))
+  assert.ok(result.additions.some(addition => addition.id === 'd1'))
+  assert.ok(result.additions.every(addition => addition.kind !== 'default_assumption' || addition.value === canonical || result.optimized.includes(addition.value)))
+})
