@@ -68,9 +68,9 @@ gh repo create clarkdonaldtfgbw5081-del/dsh-prompt-booster --public --source=. -
 发布由 `.github/workflows/release.yml` 自动完成：推送形如 `v*` 的 tag 后，工作流会校验 tag 与 `package.json` 版本一致，运行 `npm run verify`，安装 Chromium 并执行 `npm run test:browser`，再打包、从 CHANGELOG.md 提取说明并创建附带 tarball 的 GitHub Release。
 
 ```powershell
-git tag v0.2.9
-git push origin v0.2.9
-# 等待 Release 工作流完成；会生成 dsh-prompt-booster-0.2.9.tgz
+git tag v0.2.10
+git push origin v0.2.10
+# 等待 Release 工作流完成；会生成 dsh-prompt-booster-0.2.10.tgz
 ```
 
 手工步骤仅在需要本地预演或工作流不可用时作为补充：
@@ -78,10 +78,10 @@ git push origin v0.2.9
 ```powershell
 npm run verify
 npm pack
-# 生成 dsh-prompt-booster-0.2.9.tgz
+# 生成 dsh-prompt-booster-0.2.10.tgz
 ```
 
-如果更新了版本，请先运行 `npm run release:version 0.2.9`，再提交并打 tag；随后核对 README badge、README / INSTALLATION 中的 `dsh-prompt-booster-0.2.9.tgz`、本文件的版本示例与 `.github/ISSUE_TEMPLATE/bug_report.yml` 的版本占位是否已同步。
+如果更新了版本，请先运行 `npm run release:version 0.2.10`，再提交并打 tag；随后核对 README badge、README / INSTALLATION 中的 `dsh-prompt-booster-0.2.10.tgz`、本文件的版本示例与 `.github/ISSUE_TEMPLATE/bug_report.yml` 的版本占位是否已同步。
 
 Release notes 由 `scripts/changelog-notes.mjs` 从 `CHANGELOG.md` 对应版本生成（自动化工作流会用它创建 Release），应包含 DSH 基线 `0.2.1-rc.2`、测试结果和限制。
 

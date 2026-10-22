@@ -10,7 +10,7 @@ import { httpReferences } from './urls.ts'
 export const codepoints = (text: string): number => [...text].length
 const unique = (values: string[]): string[] => [...new Set(values)]
 const numbers = (text: string): string[] => text.match(/[-+]?\d+(?:\.\d+)*(?:%|ms|秒|分钟|小时|天|字|个|页|MB|GB)?/g) ?? []
-const technologies = new Set(['react', 'vue', 'angular', 'svelte', 'python', 'tailwind', 'typescript', 'javascript', 'node', 'nodejs', 'npm', 'pnpm', 'django', 'flask', 'fastapi', 'docker', 'redis', 'mysql', 'postgresql', 'sqlite', 'mongodb', 'openai', 'deepseek', 'dsh', 'api', 'sdk', 'html', 'css', 'sql', 'rust', 'java', 'kotlin', 'swift', 'stripe', 'firebase', 'architect', 'aws', 'serverless', 'lambda', 'dynamodb', 'cloudformation'])
+const technologies = new Set(['react', 'vue', 'angular', 'svelte', 'python', 'tailwind', 'typescript', 'javascript', 'node', 'nodejs', 'npm', 'pnpm', 'django', 'flask', 'fastapi', 'docker', 'redis', 'mysql', 'postgresql', 'sqlite', 'mongodb', 'openai', 'deepseek', 'dsh', 'qq', 'ai', 'api', 'sdk', 'html', 'css', 'sql', 'rust', 'java', 'kotlin', 'swift', 'stripe', 'firebase', 'architect', 'aws', 'serverless', 'lambda', 'dynamodb', 'cloudformation'])
 const proseLabels = new Set([
   'please', 'task', 'goal', 'output', 'requirements', 'context', 'acceptance', 'build', 'implement', 'create', 'fix', 'write',
   'analyze', 'research', 'use', 'keep', 'do', 'dont', 'only', 'the', 'a', 'an', 'i', 'we', 'you', 'deliver', 'return',
@@ -34,10 +34,15 @@ const proseLabels = new Set([
   'store', 'load', 'fetch', 'request', 'apply', 'account', 'match', 'align', 'prioritize', 'mention', 'illustrate',
 ])
 interface IdentifierToken { token: string; index: number }
+const lexicalTokens = (text: string): RegExpStringIterator<RegExpExecArray> =>
+  text.matchAll(/[A-Za-z_$][A-Za-z\d_$]*(?:[./:@+-][A-Za-z\d_$-]+)*/g)
+// Keep token boundaries: QQ cannot be justified by myqq, qq.js or a path segment.
+const plainWords = (text: string): Set<string> => new Set([...lexicalTokens(text)]
+  .map(match => match[0]).filter(token => /^[A-Za-z]+$/.test(token)).map(token => token.toLowerCase()))
 
 function identifierTokens(text: string): IdentifierToken[] {
   const tokens: IdentifierToken[] = []
-  for (const match of text.matchAll(/[A-Za-z_$][A-Za-z\d_$]*(?:[./:@+-][A-Za-z\d_$-]+)*/g)) {
+  for (const match of lexicalTokens(text)) {
     const token = match[0]
     if (technologies.has(token.toLowerCase()) || /[._$/:@+\d-]/.test(token)
       || (/[A-Z]/.test(token) && token.length > 1 && !proseLabels.has(token.toLowerCase()))) {
@@ -246,13 +251,21 @@ export function validateCandidate(request: BoostRequest, candidate: Candidate, s
   for (const preference of intent.explicit_preferences) if (!preservesPreference(preference, body)) errors.push('lost_preference')
   const outputNumbers = new Set(numbers(body))
   const outputIdentifiers = new Set(identifiers(body))
+  const outputWords = plainWords(body)
   for (const number of unique(numbers(request.raw))) if (!outputNumbers.has(number)) errors.push('lost_number')
-  for (const identifier of unique(identifiers(request.raw))) if (!outputIdentifiers.has(identifier)) errors.push('lost_identifier')
+  for (const identifier of unique(identifiers(request.raw))) {
+    const caseFlexible = technologies.has(identifier.toLowerCase()) || /^[A-Z]{2,}$/.test(identifier)
+    if (!outputIdentifiers.has(identifier) && !(caseFlexible && outputWords.has(identifier.toLowerCase()))) errors.push('lost_identifier')
+  }
   const allowedNumbers = new Set(numbers(allow.join('\n')))
   for (const number of numbers(body.replace(/^\s*\d+[.)、]\s*/gm, ''))) if (!allowedNumbers.has(number)) errors.push('new_number')
   const allowedIdentifiers = new Set(identifiers(allow.join('\n')).map(s => s.toLowerCase()))
+  const allowedWords = plainWords(allow.join('\n'))
   for (const { token, index } of identifierTokens(body)) {
     if (allowedIdentifiers.has(token.toLowerCase())) continue
+    // Capitalizing a word already supplied by the user does not invent an entity.
+    // Exact code spans, paths, references and prohibitions are checked separately.
+    if (/^[A-Za-z]+$/.test(token) && allowedWords.has(token.toLowerCase())) continue
     // This ordinary login paraphrase contains a hyphen but is not a new code
     // identifier. Quoted code and file names remain protected independently.
     if (/^sign-in$/i.test(token) && /\blogin\b|\bsign[ -]in\b/i.test(request.raw)) continue
