@@ -5,6 +5,7 @@ import { classify } from '../core/route.ts'
 import { positiveRequirements } from '../core/strategy.ts'
 import { taskAnchors, matchesTaskAnchor, missingTaskPart } from './task.ts'
 import { preservesPreference } from '../core/wording.ts'
+import { httpReferences } from './urls.ts'
 
 export const codepoints = (text: string): number => [...text].length
 const unique = (values: string[]): string[] => [...new Set(values)]
@@ -132,9 +133,11 @@ function preservesTaskIntent(raw: string, body: string): boolean {
 
 /** Keep exact spans for constraints and opaque references; rules are deliberately conservative. */
 export function protectedFragments(raw: string): string[] {
+  const urls = httpReferences(raw)
   return unique([
     ...(raw.match(/```[\s\S]*?```|`[^`\n]+`/g) ?? []),
-    ...(raw.match(/(?:[A-Za-z]:[\\/]|\.{0,2}\/)[^\s，。；;！？!?"<>]+/g) ?? []),
+    ...urls.values,
+    ...(urls.withoutUrls.match(/(?:[A-Za-z]:[\\/]|\.{0,2}\/)[^\s，。；;！？!?"<>]+/g) ?? []),
     ...raw.split(/[，。；;！!？?\n]/).map(s => s.trim()).filter(s =>
       /不要|不得|禁止|不能|不允许|不新增|不修改|不改|不添加|不加入|不使用|不需要|不加|不做|无需|不超过|不低于|仅|只(?:给|做|要|输出|修改|使用)|先.{0,12}(?:方案|分析|计划)|do not|don't|must not|only|no new|at most|at least/i.test(s)),
   ]).filter(Boolean)

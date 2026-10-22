@@ -5,7 +5,7 @@ import { taskIntent, textBudget } from './intent.ts'
 import { solutionStrategy } from './strategy.ts'
 import { hasTaskStructure } from './refinement.ts'
 
-export const PROMPT_VERSION = '5'
+export const PROMPT_VERSION = '6'
 
 export const SYSTEM_PROMPT = `你是提示词改写器。把用户草稿整理成清晰、可执行的任务，不执行任务本身。
 只输出一个 JSON 对象，不使用代码围栏，不附加解释、推理或自评。

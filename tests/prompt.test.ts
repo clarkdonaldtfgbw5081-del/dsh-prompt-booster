@@ -23,7 +23,7 @@ test('prompt context is progressive, budgeted, and keeps task-specific sections 
   assert.ok(modelInput(request('写一篇给初学者的项目介绍')).length < 600)
 
   // The core contract stays short enough to leave room for task-specific guidance.
-  assert.equal(PROMPT_VERSION, '5')
+  assert.equal(PROMPT_VERSION, '6')
   assert.ok(SYSTEM_PROMPT.length < 3000, `system prompt is ${SYSTEM_PROMPT.length} chars`)
   assert.match(SYSTEM_PROMPT, /完成定义/)
   assert.match(SYSTEM_PROMPT, /default_choices/)

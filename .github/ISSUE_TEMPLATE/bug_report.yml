@@ -13,7 +13,7 @@ body:
     attributes:
       label: 插件版本
       description: package.json 版本或 Release tag
-      placeholder: "0.2.8"
+      placeholder: "0.2.9"
     validations:
       required: true
   - type: input
