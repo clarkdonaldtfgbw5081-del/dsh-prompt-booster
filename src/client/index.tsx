@@ -9,6 +9,7 @@ import type { BoostEvent, BoostRequest, BoostResult } from '../types.ts'
 import { Booster } from './Booster.tsx'
 import { createEventLog } from './events.ts'
 import { planDraftEdit, type DraftReference } from './references.ts'
+import { generateWithCompatibility } from './transport.ts'
 
 interface Injected {
   sessionId: string
@@ -96,14 +97,7 @@ export async function apply(ctx: Context): Promise<void> {
             }).catch(() => { /* Feedback failures cannot affect the draft. */ })
           },
           async generate(request, signal) {
-            signal.throwIfAborted()
-            const stream = scope.remote.promptBooster.boost({ session_id: sessionId, request })
-            const abort = () => stream.dispose()
-            signal.addEventListener('abort', abort, { once: true })
-            try {
-              for await (const result of stream) { signal.throwIfAborted(); return result }
-              throw new Error('empty_remote_result')
-            } finally { signal.removeEventListener('abort', abort); stream.dispose() }
+            return generateWithCompatibility(scope.remote.promptBooster, sessionId, request, signal)
           },
         }
       },

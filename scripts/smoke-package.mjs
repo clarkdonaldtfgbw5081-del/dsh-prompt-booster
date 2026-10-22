@@ -21,13 +21,13 @@ ctx.plugin(SessionStore)
 ctx.plugin(LlmRuntime)
 ctx.plugin(DefaultModel, { provider: 'smoke', model: 'smoke' })
 await ctx.plugin(Host)
-try { assert.deepEqual(remoteMethods(ctx.promptBooster).map(method => method.method), ['boost', 'feedback']) }
+try { assert.deepEqual(remoteMethods(ctx.promptBooster).map(method => method.method), ['boost', 'feedback', 'capabilities']) }
 finally { await ctx.fiber.dispose() }
 const require = createRequire(import.meta.url)
 let entry
 runInNewContext(await readFile(new URL('../lib/client.js', import.meta.url), 'utf8'), {
   window: { __ModuleLoader__: { load(value) { entry = value } } },
-  console, TextEncoder, TextDecoder, AbortController, AbortSignal,
+  console, TextEncoder, TextDecoder, AbortController, AbortSignal, setTimeout, clearTimeout,
 }, { timeout: 3000 })
 assert.equal(entry.id, 'dsh-prompt-booster')
 const baselineModules = new Set(['react', 'react/jsx-runtime', 'react-dom'])
@@ -45,7 +45,10 @@ const request = { request_id: 'smoke', draft_revision: 0, raw: '测试', mode: '
 const result = { marker: 'built-client-rpc' }
 browserCtx.provide('connection', {
   interactions: 'none', isLoopback: true,
-  rpc: { async *open(_path, endpoint) { assert.equal(endpoint, 'promptBooster/boost'); yield result } },
+  rpc: {
+    async call(_path, endpoint) { assert.equal(endpoint, 'promptBooster/capabilities'); return { ok: true, value: { protocol: 1, configured_mode: true, reference_fragments: true } } },
+    async *open(_path, endpoint) { assert.equal(endpoint, 'promptBooster/boost'); yield result },
+  },
 })
 class Slots extends Service {
   constructor(ctx) { super(ctx, 'slots') }

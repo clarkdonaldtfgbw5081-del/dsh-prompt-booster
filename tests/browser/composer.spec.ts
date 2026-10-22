@@ -1,6 +1,13 @@
 import { test, expect } from '@playwright/test'
+import { build } from 'esbuild'
 
-test.beforeEach(async ({ page }) => { await page.goto('/') })
+// This suite tests local editor interaction with a fixed provider. Loading its
+// real component bundle in memory avoids unrelated loopback access policies.
+const bundle = build({ entryPoints: ['tests/browser/fixture.tsx'], bundle: true, write: false, format: 'iife', platform: 'browser', jsx: 'automatic', define: { 'process.env.NODE_ENV': '"production"' } })
+test.beforeEach(async ({ page }) => {
+  await page.setContent('<!doctype html><html lang="zh"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Composer integration fixture</title><div id="root"></div></html>')
+  await page.addScriptTag({ content: (await bundle).outputFiles[0].text })
+})
 
 test('applies and restores through the actual composer slot without sending', async ({ page }) => {
   const editor = page.getByLabel('任务草稿')
@@ -91,4 +98,32 @@ test('DSH dark theme, reduced motion and narrow toolbars remain usable', async (
   const box = await page.locator('.pb').boundingBox()
   expect(box!.x + box!.width).toBeLessThanOrEqual(320)
   await page.getByRole('button', { name: '取消优化', exact: true }).click()
+})
+
+test('a connection failure preserves the draft and the same control can retry', async ({ page }) => {
+  const optimize = page.getByRole('button', { name: '优化提示词', exact: true })
+  await optimize.click()
+  await page.getByRole('button', { name: '模拟断线' }).click()
+  await expect(page.getByLabel('任务草稿')).toHaveValue('写一份周报')
+  await expect(page.locator('.pb').getByRole('status')).toContainText('无法连接插件后台')
+  await expect(optimize).toBeEnabled()
+  await optimize.click()
+  await page.getByRole('button', { name: '完成请求' }).click()
+  await expect(page.getByLabel('任务草稿')).toHaveValue('请写一份周报，按重点组织内容。')
+  await expect(page.getByTestId('requests')).toHaveText('2')
+  await expect(page.getByTestId('sends')).toHaveText('0')
+})
+
+test('repeated clicks refine lightly and restore the initial draft', async ({ page }) => {
+  const optimize = page.getByRole('button', { name: '优化提示词', exact: true })
+  await optimize.click()
+  await page.getByRole('button', { name: '完成请求' }).click()
+  await expect(optimize).toHaveAttribute('title', /轻量润色/)
+  await optimize.click()
+  await expect(page.getByTestId('last-mode')).toHaveText('light')
+  await page.getByRole('button', { name: '完成请求' }).click()
+  await expect(page.getByLabel('任务草稿')).toHaveValue('请写一份周报，突出重点。')
+  await page.getByRole('button', { name: '还原原稿' }).click()
+  await expect(page.getByLabel('任务草稿')).toHaveValue('写一份周报')
+  await expect(page.getByTestId('sends')).toHaveText('0')
 })

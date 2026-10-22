@@ -39,7 +39,9 @@ test('client mounts and injects the native remote namespace before boost and fee
         yield response
       },
       async call(_path: string, endpoint: string, payload: unknown) {
-        calls.push({ endpoint, payload }); feedbackReady()
+        calls.push({ endpoint, payload })
+        if (endpoint === 'promptBooster/capabilities') return { ok: true, value: { protocol: 1, configured_mode: true, reference_fragments: true } }
+        feedbackReady()
         return { ok: true, value: { accepted: true } }
       },
     },
@@ -72,8 +74,9 @@ test('client mounts and injects the native remote namespace before boost and fee
     assert.deepEqual(await face.generate(request, new AbortController().signal), response)
     face.trackEvent({ name: 'boost_undone', request_id: request.request_id, ok: true })
     await feedback
-    assert.deepEqual(calls.map(call => call.endpoint), ['promptBooster/boost', 'promptBooster/feedback'])
-    assert.deepEqual(JSON.parse(JSON.stringify(calls[0].payload)), { args: { input: { session_id: 'session-fixture', request } } })
+    assert.deepEqual(calls.map(call => call.endpoint), ['promptBooster/capabilities', 'promptBooster/boost', 'promptBooster/feedback'])
+    assert.deepEqual(JSON.parse(JSON.stringify(calls[0].payload)), { args: { input: { session_id: 'session-fixture' } } })
+    assert.deepEqual(JSON.parse(JSON.stringify(calls[1].payload)), { args: { input: { session_id: 'session-fixture', request } } })
     await plugin.dispose()
     assert.equal(registration, undefined)
     assert.equal(removed, 1)

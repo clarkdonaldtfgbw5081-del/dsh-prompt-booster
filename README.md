@@ -10,7 +10,7 @@ DeepSeek Harness（DSH）提示词优化插件：点一下输入框工具行的 
 [![CI](https://github.com/clarkdonaldtfgbw5081-del/dsh-prompt-booster/actions/workflows/ci.yml/badge.svg)](https://github.com/clarkdonaldtfgbw5081-del/dsh-prompt-booster/actions/workflows/ci.yml)
 [![DSH](https://img.shields.io/badge/DSH-0.2.1--rc.2-4a6b5c.svg)](https://github.com/clarkdonaldtfgbw5081-del/dsh-prompt-booster/blob/main/docs/COMPATIBILITY.md)
 [![Node](https://img.shields.io/badge/node-%3E%3D22.19-3c873a.svg)](https://github.com/clarkdonaldtfgbw5081-del/dsh-prompt-booster/blob/main/package.json)
-![version](https://img.shields.io/badge/version-0.2.6-5b7f6a.svg)
+![version](https://img.shields.io/badge/version-0.2.8-5b7f6a.svg)
 
 <img src="https://raw.githubusercontent.com/clarkdonaldtfgbw5081-del/dsh-prompt-booster/main/docs/assets/icon.png" width="72" align="right" alt="DSH Prompt Booster 图标" />
 
@@ -44,6 +44,9 @@ DeepSeek Harness（DSH）提示词优化插件：点一下输入框工具行的 
 - **组合任务**：识别明确的并列、编号和先后动作，将任务列表提供给模型并检查对象遗漏；代码引用内的连接词不作为新任务。
 - **相关片段**：从明确选中的文件中按当前需求提取原文片段，附原文行号范围；没有匹配时回退为文件开头。
 - **轻量模式**：原生设置选择 `light` 仅理顺表达，`standard` 可补充必要细节；均直接回填输入框。
+- **连续润色**：未编辑的优化结果再次点击时采用轻量模式，已有结构限制继续扩写；↶ 可还原到这一轮最初的原稿，编辑后恢复设置中的模式。
+- **按任务补齐**：动态网站优先补工具和实施步骤；周报、邮件、排错、研究和数据分析补适合的交付要求。明确要求优先，已表达的固定默认内容不重复追加。
+- **近期需求优先**：历史需求按新到旧使用，明确换任务时切断旧背景；所有资料仍只用于解释当前草稿。
 - **有限引用支持**：保留引用身份，仅执行不跨引用的一次连续文本替换；跨引用、移动或重复引用会保留原稿，含引用时不追加页面默认模板。
 
 ## 改写示意
@@ -70,11 +73,11 @@ DeepSeek Harness（DSH）提示词优化插件：点一下输入框工具行的 
 
 要求 DSH `0.2.1-rc.2`，并已配置可用模型。
 
-1. 从本仓库 Releases 下载 `dsh-prompt-booster-0.2.6.tgz`。
+1. 从本仓库 Releases 下载 `dsh-prompt-booster-0.2.8.tgz`。
 2. 用管理该 DSH 安装的 CLI 安装：
 
    ```powershell
-   dsh plugin --profile web add ./dsh-prompt-booster-0.2.6.tgz
+   dsh plugin --profile web add ./dsh-prompt-booster-0.2.8.tgz
    ```
 
    桌面版请使用应用安装目录自带的 CLI，不要混用其他全局安装的 `dsh`。
@@ -101,7 +104,7 @@ npm run dev
 ```powershell
 npm run verify
 npm pack
-dsh plugin --profile web add ./dsh-prompt-booster-0.2.6.tgz
+dsh plugin --profile web add ./dsh-prompt-booster-0.2.8.tgz
 ```
 
 ## 使用

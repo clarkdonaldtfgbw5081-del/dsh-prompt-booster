@@ -16,6 +16,7 @@ export const reviewDatasetSchema = z.object({
   cases: z.array(z.object({
     id: z.string().regex(/^[\w-]{1,80}$/),
     raw: z.string().min(1).max(20000),
+    expected: z.string().max(2000).optional(),
     must_preserve: z.array(z.string().min(1)).max(40).default([]),
     forbidden: z.array(z.string().min(1)).max(40).default([]),
     baseline: outcome, candidate: outcome,
@@ -41,7 +42,8 @@ export function prepareReview(input: unknown, flip: () => boolean = () => random
   const assignments = data.cases.map(row => ({ id: row.id, A: flip() ? 'candidate' as const : 'baseline' as const }))
   return {
     packet: { schema: 1, cases: data.cases.map((row, index) => ({
-      id: row.id, raw: row.raw,
+      id: row.id, raw: row.raw, ...(row.expected ? { expected: row.expected } : {}),
+      must_preserve: row.must_preserve, forbidden: row.forbidden,
       A: row[assignments[index].A].text,
       B: row[assignments[index].A === 'candidate' ? 'baseline' : 'candidate'].text,
     })) },
@@ -63,13 +65,16 @@ export function summarizeReview(input: unknown, privateKey: unknown, scores: unk
   }
   if (key.fingerprint !== digest(data)) throw new Error('Dataset changed after blind review preparation')
   const result = (side: 'baseline' | 'candidate') => {
-    let wins = 0, criticalFailures = 0, score = 0, ok = 0, preserved = 0, checked = 0
+    let wins = 0, criticalFailures = 0, score = 0, ok = 0, preserved = 0, checked = 0, acceptableUnchanged = 0
+    const statuses = { ok: 0, skipped: 0, fallback: 0, cancelled: 0 }
     for (const row of data.cases) {
       const a = key.assignments.find(item => item.id === row.id)!.A
       const label = a === side ? 'A' : 'B'
       const review = ratings.find(item => item.id === row.id)!
       if (review.preferred === label) wins++
       const marks = review[label]
+      statuses[row[side].status]++
+      if (row[side].status === 'skipped' && row[side].text === row.raw && marks.intent === 2 && marks.completeness === 2 && marks.usefulness === 2) acceptableUnchanged++
       if (marks.intent === 0 || marks.completeness === 0) criticalFailures++
       score += marks.intent + marks.completeness + marks.usefulness
       if (row[side].status === 'ok') {
@@ -83,6 +88,8 @@ export function summarizeReview(input: unknown, privateKey: unknown, scores: unk
     return { version: data[side], total: ids.length, usable: ok, coverage: ok / ids.length,
       wins, criticalFailures, meanScore: score / ids.length,
       exactChecks: { passed: preserved, evaluated: checked },
+      statuses, acceptableUnchanged,
+      p50_ms: percentile(data.cases.map(row => row[side].latency_ms), 0.5),
       p90_ms: percentile(data.cases.map(row => row[side].latency_ms), 0.9) }
   }
   return { schema: 1, provenance: data.provenance, fingerprint: key.fingerprint,

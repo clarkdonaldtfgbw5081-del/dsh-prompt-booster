@@ -1,6 +1,9 @@
 import type { BoostRequest, Candidate } from '../types.ts'
 import { taskIntent, textBudget } from './intent.ts'
 import { solutionStrategy } from './strategy.ts'
+import { taskDefaults } from './task-defaults.ts'
+import { hasTaskStructure } from './refinement.ts'
+import { rendersDefault } from './default-coverage.ts'
 
 export const defaultCategories = ['tech_stack', 'page_modules', 'assets', 'delivery'] as const
 export type DefaultCategory = typeof defaultCategories[number]
@@ -10,15 +13,21 @@ export interface DefaultChoice { category: DefaultCategory; value: string }
 export function defaultChoices(request: BoostRequest): DefaultChoice[] {
   const raw = request.raw
   const intent = taskIntent(request)
-  if (request.reference_fragments?.length || request.preferences?.fillDefaults === false || request.mode !== 'standard' || !intent.is_page_task || intent.operation === 'modify' || intent.project === 'existing' || intent.stage === 'analysis'
-    || /(?:不要|不允许|禁止).{0,8}(?:自行|自动).{0,8}(?:补充|设定|假设)|仅润色|只润色|do not (?:add|assume)|no assumptions/i.test(raw)
+  if (request.reference_fragments?.length || request.preferences?.fillDefaults === false || request.mode !== 'standard' || intent.concise || hasTaskStructure(raw)
+    || /(?:不要|不允许|禁止).{0,8}(?:自行|自动).{0,8}(?:补充|设定|假设)|仅润色|只润色|不要扩写|仅输出|只输出|do not (?:add|assume)|no assumptions|output only/i.test(raw)) return []
+  if (!intent.is_page_task) return fitChoices(request, taskDefaults(request, intent))
+  if (intent.operation === 'modify' || intent.project === 'existing' || intent.stage === 'analysis'
     || /(?:排查|报错|修复|为什么|分析现有|fix|debug|why|review)/i.test(raw)) return []
   const en = request.language === 'en'
   const strategy = solutionStrategy(request)
+  const dynamic = /动态(?:网站|网页)|交互式(?:网站|网页)|\bdynamic (?:website|site|page)\b/i.test(raw)
   const choices: DefaultChoice[] = []
   const evidence = [raw, ...request.context_sources.map(source => source.content)].join('\n')
   if (!/\b(?:react|vue|angular|svelte|html|css|javascript|typescript|next\.?js|nuxt|astro|flutter|jquery|tailwind|python|django|flask|rust|java|kotlin|swift|php|go|architect|aws|serverless)\b|技术栈.{0,8}(?:待定|稍后|另定)|框架.{0,8}(?:待定|稍后|另定)/i.test(evidence)) {
-    choices.push({ category: 'tech_stack', value: en
+    choices.push({ category: 'tech_stack', value: dynamic && !/不新增依赖|不加依赖|不用框架|原生|no new dependenc|without (?:new )?dependenc|no framework/i.test(raw)
+      ? en ? 'Default tools: reuse the stack; for a new interactive site use React and Vite. Choose server and storage tools only as needed.'
+        : '默认工具：沿用已有技术栈；新建交互网站采用 React 与 Vite。服务端或存储工具按实际数据需求再选择。'
+      : en
       ? strategy.profile === 'application' ? 'Default approach: reuse project conventions; choose only the components needed for the requested application and verify locally.' : 'Default stack: reuse the project stack; for a standalone page use HTML/CSS/JavaScript without new dependencies.'
       : strategy.profile === 'application' ? '默认技术路线：优先沿用项目约定，仅选择本次应用所需的组件，并在本地验证。' : '默认技术路线：优先沿用现有项目；独立新页面采用原生 HTML/CSS/JavaScript，不新增依赖。' })
   }
@@ -33,14 +42,17 @@ export function defaultChoices(request: BoostRequest): DefaultChoice[] {
     }
     choices.push({ category: 'page_modules', value: layouts[intent.page_kind][en ? 1 : 0] })
   }
-  if (strategy.profile !== 'application' && !['login', 'dashboard'].includes(intent.page_kind) && !/图片|素材|照片|插图|纯文字|无图|只有|仅|只要|image|asset|photo|illustration|text.only|only/i.test(raw)) {
+  if (!dynamic && strategy.profile !== 'application' && !['login', 'dashboard'].includes(intent.page_kind) && !/图片|素材|照片|插图|纯文字|无图|只有|仅|只要|image|asset|photo|illustration|text.only|only/i.test(raw)) {
     choices.push({ category: 'assets', value: en
       ? 'Default assets: replaceable themed placeholders; use supplied or licensed images when available.'
       : '默认素材：使用契合主题的可替换占位图；有用户素材时优先采用，否则选择授权可用图片。' })
   }
   if (!/交付|源码|源代码|单文件|完整代码|可运行|下载|截图|仅输出|只输出|deliver|source code|single.file|screenshot|output only/i.test(raw)) {
     const plan = intent.stage === 'plan'
-    const delivery = strategy.specialist === 'architect'
+    const delivery = dynamic && intent.stage !== 'plan'
+      ? en ? 'Default workflow: map pages and interactions, build a prototype, connect required data and test loading, failures and screen sizes; deliver source and run instructions.'
+        : '默认实施：梳理页面与交互，搭建可运行原型，按需接入数据，再检查加载状态、失败反馈和不同屏幕尺寸；交付源码与本地运行说明。'
+      : strategy.specialist === 'architect'
       ? en
         ? plan ? 'Default delivery: a plan covering required resources, module boundaries and local sandbox verification; no implementation in this round.' : 'Default delivery: required source, resource definitions and local sandbox verification instructions.'
         : plan ? '默认交付：方案包含本次所需资源清单、模块边界与本地沙箱验证方法，本轮不实施。' : '默认交付：本次所需源码、资源清单与本地沙箱验证说明。'
@@ -49,6 +61,11 @@ export function defaultChoices(request: BoostRequest): DefaultChoice[] {
       : plan ? '默认交付：设计方案与实施步骤，本轮不实施。' : strategy.profile === 'application' ? '默认交付：本次应用所需源码与本地验证说明。' : '默认交付：页面完整源码及本地运行说明。'
     choices.push({ category: 'delivery', value: delivery })
   }
+  const priority = ['tech_stack', 'delivery', 'page_modules', 'assets']
+  return fitChoices(request, dynamic ? choices.sort((a, b) => priority.indexOf(a.category) - priority.indexOf(b.category)) : choices)
+}
+
+function fitChoices(request: BoostRequest, choices: DefaultChoice[]): DefaultChoice[] {
   // Short requests should stay short. No mandatory template may consume the
   // space needed to preserve the user's actual goal and constraints.
   const available = Math.max(0, textBudget(request) - [...request.raw].length - 24)
@@ -68,9 +85,10 @@ export function completeDefaults(request: BoostRequest, candidate: Candidate, ap
   const additions = [...candidate.additions]
   const appliedChoices: DefaultChoice[] = []
   for (const choice of choices) {
-    if (!appendMissing && !optimized.includes(choice.value)) continue
-    if (!optimized.includes(choice.value) && [...optimized].length + [...choice.value].length + 1 > textBudget(request)) continue
-    if (!optimized.includes(choice.value)) optimized += `\n${choice.value}`
+    const covered = rendersDefault(choice, optimized)
+    if (!appendMissing && !covered) continue
+    if (!covered && [...optimized].length + [...choice.value].length + 1 > textBudget(request)) continue
+    if (!covered) optimized += `\n${choice.value}`
     appliedChoices.push(choice)
     if (!additions.some(addition => addition.kind === 'default_assumption' && addition.category === choice.category && addition.value === choice.value)) {
       let id = `default-${choice.category}`

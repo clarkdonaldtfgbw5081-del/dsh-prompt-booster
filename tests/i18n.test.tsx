@@ -38,6 +38,19 @@ test('guard notices explain allowlisted failures without exposing unknown warnin
   assert.equal(en.notices.appliedWithSources(1), 'Optimized · 1 source provided')
 })
 
+test('host compatibility and invalid-result copy is actionable in both languages', () => {
+  const zh = copyFor('写周报'), en = copyFor('Write a report')
+  for (const code of ['host_update_required', 'host_connection_failed', 'host_check_timeout', 'client_result_invalid']) {
+    assert.ok(zh.reasons[code]); assert.ok(en.reasons[code])
+    assert.match(formatNotice(zh, { key: 'reason', code }), /原稿已保留/)
+    assert.match(formatNotice(en, { key: 'reason', code }), /Your draft was kept/)
+  }
+  assert.match(formatNotice(zh, { key: 'applied', legacyHost: true }), /已优化.*重启/)
+  assert.match(formatNotice(en, { key: 'applied', legacyHost: true }), /Optimized.*restart DSH/)
+  assert.match(zh.labels.refineHint, /轻量润色/)
+  assert.match(en.labels.refineHint, /light refinement/)
+})
+
 test('English drafts receive English labels, busy state, result and undo copy', async () => {
   assert.equal(copyFor('').locale, 'zh')
   const copy = copyFor('Write a weekly report')

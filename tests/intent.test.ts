@@ -22,7 +22,7 @@ for (const [raw, expected] of [
   ['生成高级感网页', 'code_gen'],
 ] as const) test(`action takes priority over topic: ${raw}`, () => {
   assert.equal(classify(raw), expected)
-  if (expected === 'writing') assert.deepEqual(defaultChoices(request(raw)), [])
+  if (expected === 'writing') assert.ok(defaultChoices(request(raw)).every(choice => choice.category === 'delivery'), 'writing must not receive software or page defaults')
 })
 
 for (const raw of ['给现有网站加一个深色模式', '优化网页排版，保持接口不变', 'adjust the layout of this page', '修改这个页面的按钮']) {
@@ -89,7 +89,7 @@ test('prepared model input exposes task-specific guidance without reading projec
   const input = JSON.parse(modelInput(request('修复现有项目的登录报错，不新增依赖')))
   assert.equal(input.task_intent.task_type, 'debug')
   assert.equal(input.task_intent.project, 'existing')
-  assert.equal(input.default_choices, undefined)
+  assert.deepEqual(input.default_choices.map((choice: { category: string }) => choice.category), ['delivery'])
   assert.ok(input.task_intent.guidance.some((line: string) => line.includes('不假定根因已经查明')))
   assert.equal(input.max_output_chars, 400)
 })

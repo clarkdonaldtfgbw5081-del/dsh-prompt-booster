@@ -1,5 +1,10 @@
 import { z } from 'zod'
 
+export const capabilitiesInputSchema = z.object({ session_id: z.string().min(1).max(160) }).strict()
+export const capabilitiesSchema = z.object({ protocol: z.literal(1), configured_mode: z.boolean(), reference_fragments: z.boolean() }).strict()
+export type Capabilities = z.infer<typeof capabilitiesSchema>
+export type CapabilitiesInput = z.infer<typeof capabilitiesInputSchema>
+
 export const sourceSchema = z.object({
   id: z.string().min(1).max(80),
   label: z.string().min(1).max(160),

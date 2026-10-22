@@ -117,7 +117,7 @@ async function main() {
     ctx.plugin(DefaultModel, { provider: 'smoke', model: 'smoke' })
     await ctx.plugin(Host)
     try {
-      assert.deepEqual(remoteMethods(ctx.promptBooster).map(method => method.method), ['boost', 'feedback'])
+      assert.deepEqual(remoteMethods(ctx.promptBooster).map(method => method.method), ['boost', 'feedback', 'capabilities'])
     } finally { await ctx.fiber.dispose() }
 
     // 5. Execute the packaged browser entry exactly like the DSH client module
@@ -138,7 +138,7 @@ async function main() {
     assert.ok(client.inject.includes('slots'))
     assert.ok(client.inject.includes('remote'))
 
-    console.log(`smoke-tarball: verified ${tarballName} (${packed.files.length} files), host registration, remoteMethods boost/feedback, and browser module handoff.`)
+    console.log(`smoke-tarball: verified ${tarballName} (${packed.files.length} files), host registration, remoteMethods boost/feedback/capabilities, and browser module handoff.`)
   } finally {
     await rm(scratch, { recursive: true, force: true, maxRetries: 3, retryDelay: 100 })
     assert.ok(!existsSync(scratch), 'scratch directory must be cleaned up')

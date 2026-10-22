@@ -6,6 +6,7 @@ import { formatNotice, noticeTitle, copyFor, type Notice } from './copy.ts'
 import { styles } from './styles.ts'
 import { OptimizeGlyph } from './OptimizeGlyph.tsx'
 import { canOptimizeDraft, planDraftEdit } from './references.ts'
+import { ClientFailure } from './transport.ts'
 
 export interface BoosterProps {
   draft: DraftSnapshot
@@ -77,9 +78,10 @@ export function Booster(props: BoosterProps) {
       setNotice({ key: draft.hasReferences ? 'references' : 'locked' })
       return
     }
+    const refining = history.current.canUndo(draft)
     const payload: BoostRequest = {
       request_id: newRequestId(), draft_revision: draft.revision, raw: draft.text,
-      mode: 'standard', use_configured_mode: true, language: /[\u3400-\u9fff]/.test(draft.text) ? 'zh' : 'en', context_sources: [],
+      mode: refining ? 'light' : 'standard', use_configured_mode: !refining, language: /[\u3400-\u9fff]/.test(draft.text) ? 'zh' : 'en', context_sources: [],
       ...(draft.hasReferences ? { reference_fragments: draft.references!.map(row => row.clipboardText) } : {}),
     }
     if (!requestSchema.safeParse(payload).success) { setNotice({ key: 'tooLong' }); return }
@@ -87,15 +89,18 @@ export function Booster(props: BoosterProps) {
     operation.current = { controller, id }
     setNotice(null); setBusy(true)
     try {
-      const value = resultSchema.parse(await props.generate(payload, controller.signal))
+      const parsed = resultSchema.safeParse(await props.generate(payload, controller.signal))
+      if (!parsed.success) throw new ClientFailure('client_result_invalid')
+      const value = parsed.data
       if (operation.current?.id !== id || controller.signal.aborted) return
       if (value.request_id !== payload.request_id || value.draft_revision !== payload.draft_revision || value.raw !== payload.raw
-        || (!payload.use_configured_mode && value.mode !== payload.mode)) throw new Error('mismatched_result')
+        || (!payload.use_configured_mode && value.mode !== payload.mode)) throw new ClientFailure('client_result_invalid')
       if (compositionActive.current) { setNotice({ key: 'composing' }); return }
       if (value.status !== 'ok') {
         setNotice({ key: 'reason', code: value.reason_code ?? '', warnings: value.warnings })
         return
       }
+      if (value.optimized === draft.text) { setNotice({ key: 'noResult' }); return }
       // No optional suggestions are selected implicitly, even in direct mode. The host
       // already verified sources/defaults, so tolerate bookkeeping entries whose text
       // was paraphrased out of the body (see ValidationOptions.allowUnusedAdditions).
@@ -107,9 +112,9 @@ export function Booster(props: BoosterProps) {
       if (!applied) { setNotice({ key: 'changed' }); return }
       lastAppliedRequest.current = payload.request_id
       try { props.focusDraft?.() } catch { /* Focus cannot invalidate an applied draft. */ }
-      setNotice({ key: 'applied', count: value.sources.length })
-    } catch {
-      if (operation.current?.id === id && !controller.signal.aborted) setNotice({ key: 'failed' })
+      setNotice({ key: 'applied', count: value.sources.length, legacyHost: value.warnings.includes('host_legacy_compat') })
+    } catch (error) {
+      if (operation.current?.id === id && !controller.signal.aborted) setNotice(error instanceof ClientFailure ? { key: 'reason', code: error.code } : { key: 'failed' })
     } finally {
       if (operation.current?.id === id) { operation.current = undefined; setBusy(false) }
     }
@@ -128,7 +133,7 @@ export function Booster(props: BoosterProps) {
   return <span className="pb pb-inline" aria-busy={busy}>
     <style>{styles}</style>
     <button type="button" className={`pb-icon pb-main${busy ? ' pb-working' : ''}`} aria-label={busy ? copy.labels.cancel : copy.labels.optimize}
-      title={busy ? copy.labels.busyTitle : composing ? copy.notices.composing : props.draft.hasReferences ? copy.labels.referencesHint : copy.labels.optimizeHint}
+      title={busy ? copy.labels.busyTitle : composing ? copy.notices.composing : props.draft.hasReferences ? copy.labels.referencesHint : history.current.canUndo(props.draft) ? copy.labels.refineHint : copy.labels.optimizeHint}
       onMouseDown={event => event.preventDefault()}
       onClick={busy ? cancel : optimize} disabled={!busy && (composing || !canOptimizeDraft(props.draft) || !props.draft.text.trim())}>
       <OptimizeGlyph busy={busy} />

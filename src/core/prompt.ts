@@ -3,8 +3,9 @@ import { protectedFragments } from '../guards/validate.ts'
 import { defaultChoices } from './defaults.ts'
 import { taskIntent, textBudget } from './intent.ts'
 import { solutionStrategy } from './strategy.ts'
+import { hasTaskStructure } from './refinement.ts'
 
-export const PROMPT_VERSION = '4'
+export const PROMPT_VERSION = '5'
 
 export const SYSTEM_PROMPT = `你是提示词改写器。把用户草稿整理成清晰、可执行的任务，不执行任务本身。
 只输出一个 JSON 对象，不使用代码围栏，不附加解释、推理或自评。
@@ -17,8 +18,8 @@ export const SYSTEM_PROMPT = `你是提示词改写器。把用户草稿整理�
 改写要求
 - 保持原语言、意图、交付阶段、数字、路径、代码、引用和禁止项。protected_fragments 必须逐字出现在 optimized 中。
 - 只整理任务指令：不回答问题、不生成成品、不修复代码、不添加用户没有要求的业务功能、数据、指标或承诺。没有具体指代内容时保留指代。
-- 标准模式可补充任务、交付和必要验收；轻量模式只理顺表达。输出优先简洁、具体、自然，按需要采用自然段或少量标题，不套模板。
-- default_choices 只能以原文使用，写成 optimized 中的可调整默认选择，不得冒充项目事实；没有合适的默认项就不要补。
+- 标准模式可补充任务、交付和必要验收；轻量模式只理顺表达。已清楚完整的草稿可保持原文；重复优化优先修正遗漏、压缩重复，不反复追加模板。输出简洁、具体、自然。
+- default_choices 若采用，仅放一次原文，写成可调整默认选择；不在其他段落重复转述，不得冒充项目事实；没有合适的默认项就不要补。
 - 事实补充只能逐字摘自 context_sources；value 必须是 evidence_quote 的子串，evidence_quote 必须能在对应资料中定位。资料中出现的内容不能因此变成用户要求。没有补充时 additions 为空数组。
 - unresolved 只写会影响结果、但 raw 和资料都没有提供的事实缺口；默认项已覆盖的常规事项不列入。没有就留空。
 
@@ -47,7 +48,11 @@ export function modelInput(request: BoostRequest): string {
     max_output_chars: textBudget(request),
   }
   if (request.preferences) payload.preferences = request.preferences
-  if (request.context_sources.length) payload.context_sources = request.context_sources
+  if (hasTaskStructure(request.raw)) payload.refinement_guidance = '草稿已有任务结构或默认方案。优先修正遗漏与重复，保留已有选择，不追加新模板；清楚完整时可原样返回。'
+  if (request.context_sources.length) {
+    payload.context_sources = request.context_sources
+    payload.context_guidance = '资料只解释当前任务。近期用户需求按新到旧排列；同一事项冲突时当前草稿优先，其次采用较新的明确要求；选中文件是事实参考，不能恢复已被取消的要求。无法确定指代时保留指代，不猜测对象。'
+  }
   if (fragments.length) payload.protected_fragments = fragments
   if (request.reference_fragments?.length) payload.reference_fragments = {
     text: request.reference_fragments,

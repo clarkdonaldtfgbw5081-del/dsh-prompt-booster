@@ -1,5 +1,11 @@
 /** Representative, hand-authored scenarios; not a collected real-user dataset. */
 export const QUALITY_CASES = [
+  { id: 'dark-paraphrase', raw: '实现深色主题并补充升级说明', valid: '实现暗色主题，并完善升级文档。', invalid: '实现浅色主题，并完善升级文档。', warning: 'lost_preference' },
+  { id: 'mobile-paraphrase', raw: '优化移动端布局并编写安装说明', valid: '调整手机端布局，并提供安装文档。', invalid: '调整桌面端布局，并提供安装文档。', warning: 'lost_preference' },
+  { id: 'beginner-paraphrase', raw: '写一篇给初学者的教程', valid: '撰写适合入门者的教程，解释必要术语。', invalid: '撰写面向专业读者的教程。', warning: 'lost_preference' },
+  { id: 'rollback-paraphrase', raw: '编写安装说明并补充回滚步骤', valid: '整理安装文档，并提供恢复旧版的指引。', invalid: '整理安装文档。', warning: 'lost_task_part' },
+  { id: 'logs-paraphrase', raw: '排查卡顿并分析日志', valid: '诊断性能瓶颈，并检查运行记录。', invalid: '诊断性能瓶颈。', warning: 'lost_task_part' },
+  { id: 'snapshot-paraphrase', raw: '整理截图并编写部署说明', valid: '整理屏幕快照，并撰写部署文档。', invalid: '整理屏幕快照。', warning: 'lost_task_part' },
   { id: 'slow', raw: '排查卡顿', valid: '诊断性能瓶颈，说明定位依据与验证方法。', invalid: '编写天气预报。' },
   { id: 'weekly', raw: '写周报', valid: '整理本周工作总结，突出进展与待办。', invalid: '编写一首诗。' },
   { id: 'screen', raw: '优化网页', valid: '改进界面的布局与可读性。', invalid: '整理会议纪要。' },

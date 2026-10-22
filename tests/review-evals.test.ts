@@ -11,6 +11,8 @@ test('blind review hides labels, includes failed attempts and emits a text-free 
   const input = dataset(), prepared = prepareReview(input, () => true)
   assert.ok(!JSON.stringify(prepared.packet).includes('candidate'))
   assert.equal(prepared.packet.cases[0].A, input.cases[0].candidate.text)
+  assert.deepEqual(prepared.packet.cases[0].must_preserve, ['500'])
+  assert.deepEqual(prepared.packet.cases[0].forbidden, ['支付'])
   const report = summarizeReview(input, prepared.key, scores)
   assert.equal(report.baseline.coverage, 0)
   assert.equal(report.candidate.coverage, 1)
@@ -18,6 +20,22 @@ test('blind review hides labels, includes failed attempts and emits a text-free 
   assert.equal(report.candidate.exactChecks.passed, 1)
   assert.ok(!JSON.stringify(report).includes('周报'))
   assert.equal(report.provenance, 'synthetic')
+})
+
+test('blind summaries separate acceptable unchanged drafts from failed attempts', () => {
+  const input = dataset()
+  input.cases[0].baseline.status = 'skipped'
+  input.cases[0].candidate.status = 'fallback'
+  const withExpectation = { ...input, cases: input.cases.map(row => ({ ...row, expected: '说明周报结构，保留字数要求' })) }
+  const prepared = prepareReview(withExpectation, () => false)
+  assert.equal(prepared.packet.cases[0].expected, withExpectation.cases[0].expected)
+  const report = summarizeReview(withExpectation, prepared.key, scores)
+  assert.equal(report.baseline.acceptableUnchanged, 1)
+  assert.equal(report.candidate.acceptableUnchanged, 0)
+  assert.equal(report.candidate.statuses.fallback, 1)
+  assert.equal(report.baseline.coverage, 0, 'unchanged is not counted as a successful rewrite')
+  assert.equal(report.baseline.p50_ms, 8)
+  assert.ok(!JSON.stringify(report).includes('字数'))
 })
 test('blind reviews reject unapproved data, changed datasets, duplicate ids and incomplete scores', () => {
   assert.throws(() => prepareReview({ ...dataset(), consent_to_evaluate: false }))

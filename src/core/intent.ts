@@ -1,6 +1,7 @@
 import type { BoostRequest, TaskType } from '../types.ts'
 import { classify } from './route.ts'
 import { taskClauses, type TaskClause } from './clauses.ts'
+import { refinementLimit } from './refinement.ts'
 
 export interface TaskIntent {
   task_type: TaskType
@@ -39,7 +40,7 @@ export function taskIntent(request: BoostRequest): TaskIntent {
     : /作品集|个人主页|portfolio/i.test(raw) ? 'portfolio'
     : /商城|商品|电商|commerce|product page|storefront/i.test(raw) ? 'commerce'
     : /风景|摄影|图片展示|视觉|landscape|photography|gallery/i.test(raw) ? 'visual' : 'generic'
-  const explicit_preferences = [...new Set(raw.match(/高级感|极简|简约|活泼|正式|幽默|友好|深色|浅色|移动端|桌面端|响应式|中文|英文|小学生|初学者|专业读者/gi) ?? [])]
+  const explicit_preferences = [...new Set(raw.match(/高级感|极简|简约|活泼|正式|幽默|友好|深色|暗色|浅色|亮色|移动端|手机端|移动设备|桌面端|响应式|中文|英文|小学生|初学者|入门者|新手|专业读者/gi) ?? [])]
   const guidance: string[] = []
   if (task_type === 'writing') guidance.push('保留题材、读者、使用场景、语气与篇幅；润色、翻译和总结的对象不能变成软件开发任务；事实与数据不补造。')
   else if (task_type === 'debug') guidance.push('围绕原故障、已有证据、定位与验证组织请求；不假定根因已经查明，不顺带重构或更换框架。')
@@ -69,5 +70,5 @@ export function textBudget(request: BoostRequest): number {
   const explicit = request.raw.match(/(?:提示词|优化后(?:的文字|的文本|的内容)?)[^，。；\n]{0,8}(?:不超过|最多|限于)\s*(\d+)\s*(?:字|字符)/)
   const limit = explicit ? Number(explicit[1]) : normal
   const concise = taskIntent(request).concise ? Math.max(100, Math.min(200, length * 2)) : normal
-  return Math.min(30000, normal, limit > 0 ? limit : normal, concise)
+  return Math.min(30000, normal, limit > 0 ? limit : normal, concise, refinementLimit(request.raw) ?? Infinity)
 }

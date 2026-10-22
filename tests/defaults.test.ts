@@ -43,8 +43,8 @@ test('plan-only and no-dependency constraints stay intact', () => {
 test('light mode, explicit opt-out and debugging do not receive default scope', () => {
   assert.deepEqual(defaultChoices({ ...request(), mode: 'light' }), [])
   assert.deepEqual(defaultChoices(request('生成网页，不要自行补充')), [])
-  assert.deepEqual(defaultChoices(request('修复这个网页的报错')), [])
-  assert.deepEqual(defaultChoices(request('写一份周报')), [])
+  assert.deepEqual(defaultChoices(request('修复这个网页的报错')).map(choice => choice.category), ['delivery'])
+  assert.deepEqual(defaultChoices(request('写一份周报')).map(choice => choice.category), ['delivery'])
 })
 test('explicit asset and delivery requirements suppress those defaults', () => {
   const choices = defaultChoices(request('生成纯文字网页，交付截图，不要图片'))
@@ -98,5 +98,6 @@ test('paraphrased default bookkeeping does not reject an otherwise usable rewrit
   // authorized and the rewrite is still applied rather than falling back.
   assert.ok(!result.optimized.includes(canonical))
   assert.ok(result.additions.some(addition => addition.id === 'd1'))
-  assert.ok(result.additions.every(addition => addition.kind !== 'default_assumption' || addition.value === canonical || result.optimized.includes(addition.value)))
+  assert.equal(result.optimized, body, 'covered layout and delivery must not be appended again either')
+  assert.deepEqual(validateCandidate(input, result, [], { allowUnusedAdditions: true }), [])
 })

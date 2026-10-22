@@ -61,6 +61,10 @@ test('native Cordis host registration, prepared LLM call, log-only audit, and un
     const request = requestSchema.parse({ request_id: 'native', draft_revision: 0, raw: '做一个登录页面' })
     const results = []
     const peer: PeerScope = { id: 'test-owner' as PeerId, ctx, principal: { kind: 'owner' }, signal: new AbortController().signal, interactions: 'none', dispose: async () => {} }
+    const capabilities = await ctx.typertGateway.invoke({ namespace: 'promptBooster', method: 'capabilities', args: { input: { session_id: session.id } }, peer })
+    assert.deepEqual(capabilities, { protocol: 1, configured_mode: true, reference_fragments: true })
+    assert.equal(adapter.streams, 0, 'handshake never calls the model')
+    assert.equal(session.snapshotEvents().filter(event => pluginRecordOf(event)).length, 0, 'handshake carries no draft audit')
     const stream = await ctx.typertGateway.stream({ namespace: 'promptBooster', method: 'boost', args: { input: { session_id: session.id, request } }, peer })
     for await (const result of stream) results.push(result as import('../src/types.ts').BoostResult)
     assert.equal(results.length, 1); assert.equal(results[0].status, 'ok')
@@ -101,12 +105,14 @@ test('native Cordis host registration, prepared LLM call, log-only audit, and un
     assert.equal(contextualResults[0].sources.length, 1)
     assert.equal(contextualResults[0].preferences?.fillDefaults, true)
     const guest: PeerScope = { ...peer, principal: { kind: 'booster-test-guest' } }
+    await assert.rejects(ctx.typertGateway.invoke({ namespace: 'promptBooster', method: 'capabilities', args: { input: { session_id: session.id } }, peer: guest }), /denied/i)
     await assert.rejects(async () => {
       const denied = await ctx.typertGateway.stream({ namespace: 'promptBooster', method: 'boost', args: { input: { session_id: session.id, request } }, peer: guest })
       for await (const _ of denied) { /* Access must be refused before any item. */ }
     }, /denied/i)
     await plugin.dispose()
     assert.equal(ctx.typert.local.get('promptBooster/boost'), undefined)
+    assert.equal(ctx.typert.local.get('promptBooster/capabilities'), undefined)
   } finally { await ctx.fiber.dispose() }
 })
 test('session model intent wins over previously used routes', async () => {

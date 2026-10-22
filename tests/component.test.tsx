@@ -5,6 +5,7 @@ import { Booster, type BoosterProps } from '../src/client/Booster.tsx'
 import { baseResult } from '../src/core/engine.ts'
 import type { BoostEvent, BoostRequest, BoostResult } from '../src/types.ts'
 import type { DraftSnapshot } from '../src/client/draft.ts'
+import { ClientFailure } from '../src/client/transport.ts'
 
 function setup(onEvent?: (event: BoostEvent) => void) {
   let draft: DraftSnapshot = { text: '写一份周报', revision: 0, locked: false, hasReferences: false }
@@ -32,7 +33,7 @@ function setup(onEvent?: (event: BoostEvent) => void) {
       await act(async () => { call.resolve({ ...baseResult(call.request, 'fixture'), status: 'ok', optimized: '请写一份周报，按重点组织内容。', ...overrides }); await Promise.resolve() })
       refresh()
     },
-    async fail() { await act(async () => { pending.at(-1)!.reject(new Error('secret-provider-error')); await Promise.resolve() }); refresh() },
+    async fail(error = new Error('secret-provider-error')) { await act(async () => { pending.at(-1)!.reject(error); await Promise.resolve() }); refresh() },
     start() { act(() => { button('优化提示词').props.onClick() }) },
     refresh,
   }
@@ -142,6 +143,28 @@ test('mismatched result metadata cannot be automatically written', async () => {
   try {
     view.start(); await view.complete({ request_id: 'other-request' })
     assert.equal(view.read().text, '写一份周报')
+    assert.match(view.renderer.root.findAll(node => node.props.role === 'status')[0].children.join(''), /返回结果异常/)
+  } finally { act(() => view.renderer.unmount()) }
+})
+
+test('a protocol failure explains the restart action while preserving the draft', async () => {
+  const view = setup()
+  try {
+    view.start(); await view.fail(new ClientFailure('host_update_required'))
+    assert.equal(view.read().text, '写一份周报')
+    const status = view.renderer.root.findAll(node => node.props.role === 'status')[0].children.join('')
+    assert.match(status, /完全退出并重开 DSH/)
+    assert.equal(view.button('优化提示词').props.disabled, false)
+  } finally { act(() => view.renderer.unmount()) }
+})
+
+test('a compatible legacy result still writes directly and indicates the feature limitation', async () => {
+  const view = setup()
+  try {
+    view.start(); await view.complete({ warnings: ['host_legacy_compat'] })
+    assert.equal(view.read().text, '请写一份周报，按重点组织内容。')
+    assert.match(view.renderer.root.findAll(node => node.props.role === 'status')[0].children.join(''), /兼容旧后台/)
+    assert.equal(view.renderer.root.findAll(node => node.props.role === 'dialog').length, 0)
   } finally { act(() => view.renderer.unmount()) }
 })
 test('switching session aborts the old request and leaves the new draft untouched', async () => {
@@ -215,4 +238,32 @@ test('an undo write failure is reported instead of escaping the toolbar', async 
     assert.equal(draft.text, '请写一份周报。')
     assert.equal(renderer.root.findAll(node => node.props.role === 'status')[0].children.join(''), '草稿已被编辑或发送，无法直接还原。')
   } finally { act(() => renderer.unmount()) }
+})
+
+test('repeated optimization refines lightly and undo returns to the first draft', async () => {
+  const view = setup()
+  try {
+    view.start(); await view.complete()
+    view.start()
+    assert.equal(view.pending.at(-1)!.request.mode, 'light')
+    assert.equal(view.pending.at(-1)!.request.use_configured_mode, false)
+    await view.complete({ optimized: '请写一份周报，清楚说明重点。' })
+    act(() => view.button('还原原稿').props.onClick()); view.refresh()
+    assert.equal(view.read().text, '写一份周报')
+    view.edit('写一份周报，详细说明进展'); view.start()
+    assert.equal(view.pending.at(-1)!.request.use_configured_mode, true)
+    await view.fail()
+  } finally { act(() => view.renderer.unmount()) }
+})
+
+test('an unchanged refinement does not write or invalidate the original undo', async () => {
+  const view = setup()
+  try {
+    view.start(); await view.complete()
+    const applied = view.read().text
+    view.start(); await view.complete({ optimized: applied })
+    assert.equal(view.writes(), 1)
+    act(() => view.button('还原原稿').props.onClick()); view.refresh()
+    assert.equal(view.read().text, '写一份周报')
+  } finally { act(() => view.renderer.unmount()) }
 })

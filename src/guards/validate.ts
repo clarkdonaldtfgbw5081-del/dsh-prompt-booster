@@ -4,6 +4,7 @@ import { taskIntent, textBudget } from '../core/intent.ts'
 import { classify } from '../core/route.ts'
 import { positiveRequirements } from '../core/strategy.ts'
 import { taskAnchors, matchesTaskAnchor, missingTaskPart } from './task.ts'
+import { preservesPreference } from '../core/wording.ts'
 
 export const codepoints = (text: string): number => [...text].length
 const unique = (values: string[]): string[] => [...new Set(values)]
@@ -239,7 +240,7 @@ export function validateCandidate(request: BoostRequest, candidate: Candidate, s
   }
   for (const fragment of protectedFragments(request.raw)) if (!body.includes(fragment) && !preservesPhase(fragment, body)) errors.push('lost_constraint')
   const intent = taskIntent(request)
-  for (const preference of intent.explicit_preferences) if (!body.includes(preference)) errors.push('lost_preference')
+  for (const preference of intent.explicit_preferences) if (!preservesPreference(preference, body)) errors.push('lost_preference')
   const outputNumbers = new Set(numbers(body))
   const outputIdentifiers = new Set(identifiers(body))
   for (const number of unique(numbers(request.raw))) if (!outputNumbers.has(number)) errors.push('lost_number')

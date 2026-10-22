@@ -1,7 +1,9 @@
 import { taskClauses } from '../core/clauses.ts'
+import { preferenceFamilies } from '../core/wording.ts'
 
 /** Small, explicit wording families; not a general semantic-equivalence claim. */
 const families = [
+  ...preferenceFamilies,
   ['卡顿', '运行缓慢', '加载缓慢', '性能瓶颈', '性能问题'],
   ['周报', '每周工作总结', '本周工作总结'],
   ['网页', '页面', '界面'],
@@ -11,6 +13,9 @@ const families = [
   ['login', 'sign-in', 'sign in'],
   ['installation', 'install'],
   ['uninstall', 'uninstallation'],
+  ['截图', '屏幕截图', '屏幕快照'],
+  ['回滚', '恢复旧版'],
+  ['日志', '运行记录'],
 ] as const
 
 const genericTarget = /说明|文档|指引|步骤|详情|流程|方案|\b(?:docs?|documentation|steps?|details|instructions?)\b/gi

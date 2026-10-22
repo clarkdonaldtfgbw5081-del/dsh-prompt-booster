@@ -107,3 +107,31 @@ test('explicit Architect manifest files are text references, not executed instru
     assert.deepEqual(result.notices, [])
   } finally { await f.close() }
 })
+
+test('newest requirements get the remaining context budget before older requests', async () => {
+  const f = await fixture()
+  try {
+    f.append('旧要求：深色主题'); f.append('改为浅色主题')
+    const input = request('根据上面的要求继续')
+    input.context_sources = Array.from({ length: 7 }, (_, i) => ({ id: 'explicit-' + i, label: '资料', content: 'a'.repeat(3000) }))
+    const result = await collectContext(f.session, input, contextPolicySchema.parse({ recentLimit: 3 }), new AbortController().signal)
+    assert.equal(result.sources.length, 8)
+    assert.equal(result.sources[7].content, '改为浅色主题')
+    assert.match(result.sources[7].label, /新到旧/)
+  } finally { await f.close() }
+})
+
+test('explicit topic changes discard obsolete history but preserve selected files', async () => {
+  const f = await fixture()
+  try {
+    f.append('制作登录页面'); f.append('新任务：写一份周报'); f.append('语气自然')
+    await writeFile(join(f.folder, 'brief.md'), '明确选中的事实资料')
+    const policy = contextPolicySchema.parse({ recentLimit: 5, files: ['brief.md'] })
+    const result = await collectContext(f.session, request('根据之前的要求继续'), policy, new AbortController().signal)
+    assert.deepEqual(result.sources.slice(0, 2).map(row => row.content), ['语气自然', '新任务：写一份周报'])
+    assert.ok(!result.sources.some(row => row.content.includes('登录')))
+    const reset = await collectContext(f.session, request('新任务：分析数据'), { ...policy, recentMessages: 'always' }, new AbortController().signal)
+    assert.equal(reset.sources.length, 1)
+    assert.match(reset.sources[0].id, /selected-file/)
+  } finally { await f.close() }
+})

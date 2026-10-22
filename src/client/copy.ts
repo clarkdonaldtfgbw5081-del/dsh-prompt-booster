@@ -8,7 +8,7 @@ export type Notice =
   | { key: 'composing' }
   | { key: 'tooLong' }
   | { key: 'changed' }
-  | { key: 'applied'; count?: number }
+  | { key: 'applied'; count?: number; legacyHost?: boolean }
   | { key: 'failed' }
   | { key: 'restored' }
   | { key: 'undoBlocked' }
@@ -23,6 +23,7 @@ export interface ClientCopy {
     undo: string
     busy: string
     optimizeHint: string
+    refineHint: string
     busyTitle: string
     referencesHint: string
     undoTitle: string
@@ -40,6 +41,7 @@ export interface ClientCopy {
     tooLong: string
     changed: string
     applied: string
+    legacyHost: string
     appliedWithSources: (count: number) => string
     failed: string
     restored: string
@@ -70,12 +72,17 @@ const zh: ClientCopy = {
     undo: '还原原稿',
     busy: '优化中…',
     optimizeHint: '优化后直接填入输入框；上下文与偏好可在 DSH 设置的 prompt-booster 中调整',
+    refineHint: '再次点击将轻量润色，减少扩写；编辑草稿后恢复设置中的模式，还原可回到最初原稿',
     busyTitle: '正在优化，点击取消',
     referencesHint: '保留引用身份，仅优化可安全替换的文字；跨引用改写会保留原稿',
     undoTitle: '还原优化前的原稿',
     statusBusyTitle: '正在优化，点击图标可取消',
   },
   reasons: {
+    host_update_required: '插件前后台版本不兼容，原稿已保留；请完全退出并重开 DSH。',
+    host_connection_failed: '无法连接插件后台，原稿已保留；请检查 DSH 连接或重启。',
+    host_check_timeout: '插件后台响应超时，原稿已保留；请重试或重启 DSH。',
+    client_result_invalid: '插件返回结果异常，原稿已保留；请重试，仍失败可重启 DSH。',
     timeout: '优化超时，原稿已保留，请重试。',
     guard_failed: '改写未通过检查，原稿已保留。',
     conversational_input: '这条消息无需优化。',
@@ -101,6 +108,7 @@ const zh: ClientCopy = {
     tooLong: '草稿最多 20000 字符，原稿已保留。',
     changed: '草稿已变化，未覆盖；可再次优化。',
     applied: '已优化',
+    legacyHost: '兼容旧后台；完全重启 DSH 可启用新版功能',
     appliedWithSources: count => `已优化 · 已提供 ${count} 份参考`,
     failed: '优化失败，原稿已保留，请重试。',
     restored: '已还原原稿',
@@ -131,12 +139,17 @@ const en: ClientCopy = {
     undo: 'Restore original draft',
     busy: 'Optimizing…',
     optimizeHint: 'Writes the result directly into the composer. Adjust context and preferences in DSH settings → prompt-booster.',
+    refineHint: 'Click again for a light refinement. Editing restores your configured mode; Restore returns to the original draft.',
     busyTitle: 'Optimization in progress; click to cancel',
     referencesHint: 'Preserves reference identity and rewrites only a safe text range. Edits crossing references keep the draft.',
     undoTitle: 'Restore the draft from before optimization',
     statusBusyTitle: 'Optimization in progress; click the icon to cancel',
   },
   reasons: {
+    host_update_required: 'Plugin versions are incompatible. Your draft was kept. Fully quit and reopen DSH.',
+    host_connection_failed: 'Cannot reach the plugin host. Your draft was kept. Check the DSH connection or restart.',
+    host_check_timeout: 'The plugin host check timed out. Your draft was kept. Retry or restart DSH.',
+    client_result_invalid: 'The plugin returned an invalid result. Your draft was kept. Retry or restart DSH if it persists.',
     timeout: 'Optimization timed out. Your draft was kept. Try again.',
     guard_failed: 'The rewrite did not pass validation. Your draft was kept.',
     conversational_input: 'This message does not need optimization.',
@@ -162,6 +175,7 @@ const en: ClientCopy = {
     tooLong: 'The draft is limited to 20,000 characters. Your draft was kept.',
     changed: 'The draft changed, so the result was not applied. You can optimize again.',
     applied: 'Optimized',
+    legacyHost: 'Legacy host compatibility; fully restart DSH to enable new features',
     appliedWithSources: count => `Optimized · ${count} source${count === 1 ? '' : 's'} provided`,
     failed: 'Optimization failed. Your draft was kept. Try again.',
     restored: 'Original draft restored',
@@ -182,7 +196,7 @@ export function copyFor(text: string): ClientCopy {
 
 export function formatNotice(copy: ClientCopy, notice: Notice): string {
   switch (notice.key) {
-    case 'applied': return notice.count ? copy.notices.appliedWithSources(notice.count) : copy.notices.applied
+    case 'applied': return `${notice.count ? copy.notices.appliedWithSources(notice.count) : copy.notices.applied}${notice.legacyHost ? ` · ${copy.notices.legacyHost}` : ''}`
     case 'cancelled': return copy.notices.cancelled
     case 'references': return copy.notices.references
     case 'referenceConflict': return copy.notices.referenceConflict

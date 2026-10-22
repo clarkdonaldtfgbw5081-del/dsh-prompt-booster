@@ -13,7 +13,7 @@ import { sessionRoute } from './adapters/route.ts'
 import { optimizationControls } from './adapters/controls.ts'
 import { BoostFailure } from './core/failures.ts'
 import { FeedbackTracker } from './core/feedback.ts'
-import { feedbackSchema, requestSchema, type BoostEvent, type BoostRequest, type BoostResult, type FeedbackRequest } from './types.ts'
+import { feedbackSchema, requestSchema, type CapabilitiesInput, type Capabilities, type BoostEvent, type BoostRequest, type BoostResult, type FeedbackRequest } from './types.ts'
 
 declare module '@deepseek-ai/cordis' { interface Context { promptBooster: PromptBooster } }
 declare module '@deepseek-ai/dsh-session/types' {
@@ -144,6 +144,11 @@ export default class PromptBooster extends TypertRemoteService {
   @Remote({ resources: { session: (input) => input.session_id as SessionId } })
   feedback(input: FeedbackRequest): { accepted: boolean } {
     return { accepted: this.feedbackTracker.accept(feedbackSchema.parse(input)) }
+  }
+
+  @Remote({ resources: { session: (input) => input.session_id as SessionId } })
+  capabilities(_input: CapabilitiesInput): Capabilities {
+    return { protocol: 1, configured_mode: true, reference_fragments: true }
   }
 
   private record(event: BoostEvent): void {
