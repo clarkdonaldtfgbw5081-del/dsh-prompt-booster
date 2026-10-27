@@ -1,6 +1,6 @@
 # 贡献指南
 
-感谢参与。这个项目是 DSH 插件，当前固定目标为 DSH `0.2.1-rc.2` / Cordis `4.0.5`。开始前请先读 [开发指南](docs/DEVELOPMENT.md) 和 [安全策略](SECURITY.md)。
+感谢参与。这个项目是 DSH 插件，当前固定目标为 DSH `0.2.1-rc.3` / Cordis `4.0.5`。开始前请先读 [开发指南](docs/DEVELOPMENT.md) 和 [安全策略](SECURITY.md)。
 
 ## 开发流程
 

@@ -10,7 +10,7 @@ DeepSeek Harness（DSH）提示词优化插件：点一下输入框工具行的 
 [![CI](https://github.com/clarkdonaldtfgbw5081-del/dsh-prompt-booster/actions/workflows/ci.yml/badge.svg)](https://github.com/clarkdonaldtfgbw5081-del/dsh-prompt-booster/actions/workflows/ci.yml)
 [![DSH](https://img.shields.io/badge/DSH-0.2.1--rc.2-4a6b5c.svg)](https://github.com/clarkdonaldtfgbw5081-del/dsh-prompt-booster/blob/main/docs/COMPATIBILITY.md)
 [![Node](https://img.shields.io/badge/node-%3E%3D22.19-3c873a.svg)](https://github.com/clarkdonaldtfgbw5081-del/dsh-prompt-booster/blob/main/package.json)
-![version](https://img.shields.io/badge/version-0.2.10-5b7f6a.svg)
+![version](https://img.shields.io/badge/version-0.2.11-5b7f6a.svg)
 
 <img src="https://raw.githubusercontent.com/clarkdonaldtfgbw5081-del/dsh-prompt-booster/main/docs/assets/icon.png" width="72" align="right" alt="DSH Prompt Booster 图标" />
 
@@ -71,13 +71,13 @@ DeepSeek Harness（DSH）提示词优化插件：点一下输入框工具行的 
 
 ### 从 Release 安装（推荐）
 
-要求 DSH `0.2.1-rc.2`，并已配置可用模型。
+要求 DSH `0.2.1-rc.3`，并已配置可用模型。
 
-1. 从本仓库 Releases 下载 `dsh-prompt-booster-0.2.10.tgz`。
+1. 从本仓库 Releases 下载 `dsh-prompt-booster-0.2.11.tgz`。
 2. 用管理该 DSH 安装的 CLI 安装：
 
    ```powershell
-   dsh plugin --profile web add ./dsh-prompt-booster-0.2.10.tgz
+   dsh plugin --profile web add ./dsh-prompt-booster-0.2.11.tgz
    ```
 
    桌面版请使用应用安装目录自带的 CLI，不要混用其他全局安装的 `dsh`。
@@ -104,7 +104,7 @@ npm run dev
 ```powershell
 npm run verify
 npm pack
-dsh plugin --profile web add ./dsh-prompt-booster-0.2.10.tgz
+dsh plugin --profile web add ./dsh-prompt-booster-0.2.11.tgz
 ```
 
 ## 使用
@@ -167,7 +167,7 @@ dsh plugin --profile web add ./dsh-prompt-booster-0.2.10.tgz
 
 | 项目 | 版本 |
 | --- | --- |
-| DSH | `0.2.1-rc.2` |
+| DSH | `0.2.1-rc.3` |
 | Cordis | `4.0.5` |
 | Node.js | `>=22.19.0`（构建 / 本地开发） |
 | 验证环境 | Windows 桌面版；DSH Web 使用相同客户端体系 |

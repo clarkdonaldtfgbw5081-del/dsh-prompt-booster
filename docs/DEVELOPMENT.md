@@ -4,7 +4,7 @@
 
 - Node.js `>=22.19.0`（开发使用 `24.16.0`）
 - npm 11（仓库含 `package-lock.json`，使用 `npm ci`）
-- 目标 DSH `0.2.1-rc.2` 与 Cordis `4.0.5`；宿主和客户端两类依赖都要安装
+- 目标 DSH `0.2.1-rc.3` 与 Cordis `4.0.5`；宿主和客户端两类依赖都要安装
 - 推荐 Windows / macOS / Linux；当前主要在 Windows 验证，跨平台问题请提 Issue
 
 ```powershell

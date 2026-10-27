@@ -32,5 +32,5 @@ body:
           required: true
         - label: 这个建议不要求新增遥测或独立日志（会话审计语义见 SECURITY.md）
           required: true
-        - label: 我理解当前 DSH 版本固定为 0.2.1-rc.2
+        - label: 我理解当前 DSH 版本固定为 0.2.1-rc.3
           required: false

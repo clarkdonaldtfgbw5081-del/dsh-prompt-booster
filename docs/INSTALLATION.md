@@ -2,7 +2,7 @@
 
 ## 环境要求
 
-- **DSH**：`0.2.1-rc.2`（当前固定目标；其他版本需自行验证）。
+- **DSH**：`0.2.1-rc.3`（当前固定目标；其他版本需自行验证）。
 - **Cordis**：`4.0.5`。
 - **Node.js**：`>=22.19.0`（仅从源码构建或运行本地演示时需要；安装预打包 tarball 时由 DSH 运行时负责）。
 - **操作系统**：DSH Web / 桌面版；目前已知可在 Windows 桌面版安装。
@@ -15,7 +15,7 @@
 2. 使用管理该 DSH 安装的 CLI 安装：
 
    ```powershell
-   dsh plugin --profile web add ./dsh-prompt-booster-0.2.10.tgz
+   dsh plugin --profile web add ./dsh-prompt-booster-0.2.11.tgz
    ```
 
    桌面版请使用应用安装目录中附带的 CLI，不要混用其他全局安装的 `dsh`。
@@ -33,7 +33,7 @@ npm run typecheck
 npm test
 npm run build
 npm pack
-dsh plugin --profile web add ./dsh-prompt-booster-0.2.10.tgz
+dsh plugin --profile web add ./dsh-prompt-booster-0.2.11.tgz
 ```
 
 `npm pack` 会依次执行发布前路径与密钥检查、版本一致性检查、类型检查、自动化测试、离线评测、构建、打包内容检查、产物冒烟与 tarball 冒烟；全部通过后才会生成 tarball。独立的浏览器验收另运行 `npm run test:browser`。
@@ -41,7 +41,7 @@ dsh plugin --profile web add ./dsh-prompt-booster-0.2.10.tgz
 ## 升级
 
 ```powershell
-dsh plugin --profile web add ./dsh-prompt-booster-0.2.10.tgz
+dsh plugin --profile web add ./dsh-prompt-booster-0.2.11.tgz
 ```
 
 安装后完全退出并重启 DSH。插件配置保存在当前 DSH profile 中；升级默认保留已有配置。
@@ -84,7 +84,7 @@ dsh plugin --profile web remove dsh-prompt-booster
 ## 常见问题
 
 **安装后没有看到图标。**
-确认 DSH 版本为 `0.2.1-rc.2`，插件已安装到当前使用的 profile，并且 DSH 已完全重启。桌面版请确认使用的是应用附带的 CLI。
+确认 DSH 版本为 `0.2.1-rc.3`，插件已安装到当前使用的 profile，并且 DSH 已完全重启。桌面版请确认使用的是应用附带的 CLI。
 
 **模型请求失败或超时。**
 插件会保留原稿并显示简短失败状态，点击图标可重试。检查 DSH 当前会话的模型配置、网络和 `timeoutMs` 设置；插件不会自动重试传输错误。

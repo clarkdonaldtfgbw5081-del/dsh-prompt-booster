@@ -13,14 +13,14 @@ body:
     attributes:
       label: 插件版本
       description: package.json 版本或 Release tag
-      placeholder: "0.2.10"
+      placeholder: "0.2.11"
     validations:
       required: true
   - type: input
     id: dsh-version
     attributes:
       label: DSH / Cordis 版本
-      placeholder: "DSH 0.2.1-rc.2 / Cordis 4.0.5"
+      placeholder: "DSH 0.2.1-rc.3 / Cordis 4.0.5"
     validations:
       required: true
   - type: input

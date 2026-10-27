@@ -70,5 +70,5 @@ try {
   assert.equal(browserCtx.get('remote.promptBooster'), undefined)
 } finally { await browserCtx.fiber.dispose() }
 const manifest = JSON.parse(await readFile(new URL('../package.json', import.meta.url), 'utf8'))
-assert.equal(manifest.engines.dsh, '0.2.1-rc.2')
+assert.equal(manifest.engines.dsh, '0.2.1-rc.3')
 console.log('Built host decorators, browser module handoff, native client injection, RPC and unload verified.')
